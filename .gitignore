@@ -1,0 +1,6 @@
+jmigrate-state.json
+*.sql
+*.sql.gz
+*.gz
+configuration.php.bak-*
+.DS_Store
