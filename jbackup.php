@@ -5,7 +5,7 @@
  *
  * วิธีใช้
  *  - แก้ MIGRATE_KEY ให้เป็นรหัสของคุณ (ใช้รหัสเดียวกับ jmigrate.php บน server ใหม่ จะดึงแพ็กเกจข้ามเครื่องได้)
- *  - อัปโหลดไว้ที่ root ของเว็บเดิม (ที่เดียวกับ configuration.php) แล้วเปิด jbackup.php?key=รหัส
+ *  - อัปโหลดไว้ที่ root ของเว็บเดิม (ที่เดียวกับ configuration.php) แล้วเปิด jbackup.php กรอกรหัสในหน้า login
  *  - กด "สร้างแพ็กเกจ" ระบบจะ dump ฐานข้อมูลและบีบอัดไฟล์แบบแบ่งรอบ ไม่ติด timeout
  *  - ได้โฟลเดอร์ jbackup-<ชื่อ>/ ที่มี db.sql.gz, site-part1.zip …, manifest.json
  *  - บน server ใหม่ เปิด jmigrate.php → ส่วน "กู้จากแพ็กเกจ" ใส่ URL ของไฟล์นี้ จะดึงแพ็กเกจไปเอง
@@ -13,7 +13,8 @@
  */
 
 const MIGRATE_KEY  = 'changeme123';        // <<< แก้เป็นรหัสของคุณ (ต้องตรงกับ jmigrate.php)
-const TOOL_VERSION = '1.1.0';
+const TOOL_TITLE   = 'Joomla Backup Tool';
+const TOOL_VERSION = '1.1.1';
 const STEP_SECONDS = 8;                    // เวลาทำงานต่อรอบ
 const PART_SIZE    = 500 * 1024 * 1024;    // ขนาดสูงสุดของ zip แต่ละส่วน
 const STORE_OVER   = 64 * 1024 * 1024;     // ไฟล์ใหญ่กว่านี้เก็บแบบไม่บีบอัด (เร็วกว่า)
@@ -30,10 +31,45 @@ header('X-Robots-Tag: noindex, nofollow');
 define('ROOT', __DIR__);
 define('CFG_FILE', ROOT . '/configuration.php');
 
+// ---------------------------------------------------------------- auth: login form (cookie) หรือ ?key= สำหรับเครื่องมือเรียกข้ามเครื่อง
+function auth_token() { return hash_hmac('sha256', 'jm-auth|' . __FILE__ . '|' . @filemtime(__FILE__), MIGRATE_KEY); }
+function auth_ok() {
+    $k = isset($_REQUEST['key']) ? (string)$_REQUEST['key'] : '';
+    if ($k !== '' && hash_equals(MIGRATE_KEY, $k)) return true;
+    $c = isset($_COOKIE['jm_auth']) ? (string)$_COOKIE['jm_auth'] : '';
+    return $c !== '' && hash_equals(auth_token(), $c);
+}
+function auth_cookie($on) { @setcookie('jm_auth', $on ? auth_token() : '', $on ? time() + 86400 : time() - 3600, dirname($_SERVER['SCRIPT_NAME']) ?: '/', '', !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off', true); }
+if (isset($_GET['logout'])) { auth_cookie(false); header('Location: ' . strtok($_SERVER['REQUEST_URI'], '?')); exit; }
+$loginErr = false;
+if (isset($_POST['login_key'])) {
+    if (hash_equals(MIGRATE_KEY, (string)$_POST['login_key'])) { auth_cookie(true); header('Location: ' . strtok($_SERVER['REQUEST_URI'], '?') . (isset($_POST['lang']) ? '?lang=' . ($_POST['lang'] === 'en' ? 'en' : 'th') : '')); exit; }
+    sleep(1); $loginErr = true;
+}
 $key = isset($_REQUEST['key']) ? (string)$_REQUEST['key'] : '';
-if (!hash_equals(MIGRATE_KEY, $key)) {
-    header('HTTP/1.1 403 Forbidden'); header('Content-Type: text/html; charset=utf-8');
-    echo '<p style="font-family:sans-serif">Open with <code>jbackup.php?key=…</code> (the key set in the file)</p>'; exit;
+if (!auth_ok()) {
+    if (isset($_REQUEST['action'])) { header('HTTP/1.1 403 Forbidden'); header('Content-Type: application/json; charset=utf-8'); echo json_encode(['ok' => false, 'msg' => 'auth required']); exit; }
+    $L = isset($_GET['lang']) ? $_GET['lang'] : (isset($_COOKIE['jm_lang']) ? $_COOKIE['jm_lang'] : 'th'); $en = $L === 'en';
+    header('HTTP/1.1 401 Unauthorized'); header('Content-Type: text/html; charset=utf-8'); header('X-Robots-Tag: noindex');
+    echo '<!DOCTYPE html><html lang="' . ($en ? 'en' : 'th') . '"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>' . TOOL_TITLE . '</title>
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;500;600&display=swap" rel="stylesheet">
+<style>body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#111;font-family:"Kanit","Noto Sans Thai",system-ui,sans-serif;color:#111;padding:24px;box-sizing:border-box}
+.box{background:#fff;border-radius:20px;padding:36px 32px;width:100%;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,.4)}
+h1{font-size:24px;font-weight:600;margin:18px 0 4px}p{margin:0 0 20px;color:#666;font-size:15px}
+input{width:100%;box-sizing:border-box;min-height:50px;padding:10px 14px;border:2px solid #e1e6eb;border-radius:12px;font:18px "Kanit",system-ui,sans-serif;letter-spacing:.1em}input:focus{outline:none;border-color:#3b8fe0;box-shadow:0 0 0 4px rgba(59,143,224,.28)}
+button{width:100%;min-height:50px;margin-top:14px;border:0;border-radius:14px;background:#3b8fe0;color:#fff;font:500 17px "Kanit",system-ui,sans-serif;cursor:pointer}button:hover{background:#2f7ac4}
+.err{background:#fde8e8;color:#b81b1c;border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:15px}
+.lang{text-align:center;margin-top:18px;font-size:14px}.lang a{color:#666;text-decoration:none;margin:0 6px}.lang a.on{color:#111;font-weight:600}
+.dots{display:flex;gap:6px}.dots i{width:12px;height:12px;border-radius:50%}</style></head><body>
+<form class="box" method="post" autocomplete="off">
+<div class="dots"><i style="background:#3b8fe0"></i><i style="background:#6cc04a"></i><i style="background:#f7941c"></i><i style="background:#ef2b2c"></i></div>
+<h1>' . TOOL_TITLE . '</h1><p>' . ($en ? 'Enter the access key set as <code>MIGRATE_KEY</code> in this file' : 'กรอกรหัสที่ตั้งไว้ใน <code>MIGRATE_KEY</code> ของไฟล์นี้') . '</p>'
+    . ($loginErr ? '<div class="err">' . ($en ? 'Wrong key' : 'รหัสไม่ถูกต้อง') . '</div>' : '')
+    . '<input type="password" name="login_key" placeholder="' . ($en ? 'Access key' : 'รหัสเข้าใช้') . '" autofocus required><input type="hidden" name="lang" value="' . ($en ? 'en' : 'th') . '">
+<button type="submit">' . ($en ? 'Sign in' : 'เข้าใช้งาน') . '</button>
+<div class="lang"><a href="?lang=th" class="' . ($en ? '' : 'on') . '">ไทย</a>|<a href="?lang=en" class="' . ($en ? 'on' : '') . '">EN</a></div>
+</form></body></html>';
+    exit;
 }
 
 // ---------------------------------------------------------------- language
@@ -69,7 +105,7 @@ $GLOBALS['JM_EN'] = [
     'เปิด jmigrate.php บน server ใหม่ → ส่วน "กู้จากแพ็กเกจ" → วาง URL นี้ ระบบจะดึงไฟล์ทุกส่วนไปเองแบบแบ่งรอบ (ต้องใช้ key เดียวกัน)' => 'Open jmigrate.php on the new server → "Restore from package" → paste this URL. It pulls every part itself in rounds (same key required).',
     'หรือดาวน์โหลดทุกไฟล์ในโฟลเดอร์แพ็กเกจแล้วอัปโหลดไปวางที่ root ของ server ใหม่ในโฟลเดอร์ชื่อเดียวกัน' => 'Or download every file in the package folder and upload them to the new server root, in a folder with the same name.',
     'เสร็จแล้วให้ลบ jbackup.php และโฟลเดอร์แพ็กเกจออกจาก server นี้' => 'When done, delete jbackup.php and the package folders from this server',
-    'ลบไฟล์เครื่องมือนี้' => 'Delete this tool', 'ลบ jbackup.php ออกจาก server? (แพ็กเกจจะยังอยู่)' => 'Delete jbackup.php from the server? (packages stay)',
+    'ลบไฟล์เครื่องมือนี้' => 'Delete this tool', 'ออกจากระบบ' => 'Sign out', 'ลบ jbackup.php ออกจาก server? (แพ็กเกจจะยังอยู่)' => 'Delete jbackup.php from the server? (packages stay)',
     'เชื่อมต่อฐานข้อมูลไม่ได้: ' => 'Cannot connect to the database: ',
     'ไม่มีอะไรให้สำรอง (ปิดทั้งฐานข้อมูลและไฟล์)' => 'Nothing to back up (both database and files are off)',
     'สร้างโฟลเดอร์แพ็กเกจไม่ได้ ตรวจ permission ของ root' => 'Could not create the package folder — check root permissions',
@@ -440,8 +476,9 @@ $selfUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' ? 'https' : 
   </div>
   <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
     <span class="pill" style="background:var(--blue);color:#fff">v<?= TOOL_VERSION ?></span>
-    <span class="pill" style="background:rgba(255,255,255,.12);color:#fff;gap:8px"><a href="?key=<?= h(urlencode($key)) ?>&amp;lang=th" style="color:<?= $LANG === 'th' ? '#fff' : '#a0a6ad' ?>;text-decoration:none;font-weight:<?= $LANG === 'th' ? '600' : '400' ?>">ไทย</a><span style="color:#5B6572">|</span><a href="?key=<?= h(urlencode($key)) ?>&amp;lang=en" style="color:<?= $LANG === 'en' ? '#fff' : '#a0a6ad' ?>;text-decoration:none;font-weight:<?= $LANG === 'en' ? '600' : '400' ?>">EN</a></span>
+    <span class="pill" style="background:rgba(255,255,255,.12);color:#fff;gap:8px"><a href="?lang=th" style="color:<?= $LANG === 'th' ? '#fff' : '#a0a6ad' ?>;text-decoration:none;font-weight:<?= $LANG === 'th' ? '600' : '400' ?>">ไทย</a><span style="color:#5B6572">|</span><a href="?lang=en" style="color:<?= $LANG === 'en' ? '#fff' : '#a0a6ad' ?>;text-decoration:none;font-weight:<?= $LANG === 'en' ? '600' : '400' ?>">EN</a></span>
     <span class="pill mono" style="background:rgba(255,255,255,.12);color:#fff"><?= h(ROOT) ?></span>
+    <a href="?logout=1" class="pill" style="background:rgba(255,255,255,.12);color:#fff;text-decoration:none"><?= t('ออกจากระบบ') ?></a>
   </div>
 </div></header>
 <div class="wrap">
@@ -513,7 +550,7 @@ const $ = id => document.getElementById(id);
 const fmt = n => n >= 1073741824 ? (n/1073741824).toFixed(2)+' GB' : n >= 1048576 ? (n/1048576).toFixed(1)+' MB' : Math.round(n/1024)+' KB';
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 async function api(action, data) {
-  const r = await fetch(location.pathname + '?key=' + encodeURIComponent(KEY) + '&action=' + action, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(data || {})});
+  const r = await fetch(location.pathname + '?action=' + action + (KEY ? '&key=' + encodeURIComponent(KEY) : ''), {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(data || {})});
   const txt = await r.text(); try { return JSON.parse(txt); } catch (e) { return {ok:false, msg:'HTTP ' + r.status + ': ' + txt.slice(0, 200)}; }
 }
 let running = false, current = null;
@@ -551,7 +588,7 @@ async function runLoop() {
 async function loadPackages() {
   const r = await api('list', {}); const el = $('pkgs');
   if (!r.ok || !r.packages.length) { el.innerHTML = '<div class="stat">' + t('ไม่มีแพ็กเกจ') + '</div>'; return; }
-  el.innerHTML = r.packages.map(p => '<div class="pk"><div><b>' + esc(p.name) + '</b> <span class="pill ' + (p.done ? '' : '') + '" style="' + (p.done ? 'background:var(--green-tint);color:var(--green-deep)' : 'background:var(--orange-tint);color:var(--orange-deep)') + '">' + (p.done ? t('เสร็จแล้ว') : esc(p.phase)) + '</span> <span class="stat">' + fmt(p.size) + '</span><div class="files">' + p.files.map(f => '<a href="?key=' + encodeURIComponent(KEY) + '&action=download&pkg=' + encodeURIComponent(p.dir) + '&f=' + encodeURIComponent(f) + '">' + esc(f) + '</a>').join('') + '</div><div class="stat mono" style="word-break:break-all;margin-top:6px">' + t('URL สำหรับดึงจาก server ใหม่') + ': ' + esc(location.origin + location.pathname) + '</div></div><div>' + (p.done ? '' : '<button class="sec" onclick="resumeBackup(' + JSON.stringify(p.name) + ')">' + t('ทำต่อจากจุดเดิม') + '</button>') + '<button class="danger" onclick="if(confirm(t(\'ลบแพ็กเกจนี้?\')))api(\'delete\',{name:' + JSON.stringify(p.name) + '}).then(loadPackages)">' + t('ลบ') + '</button></div></div>').join('');
+  el.innerHTML = r.packages.map(p => '<div class="pk"><div><b>' + esc(p.name) + '</b> <span class="pill ' + (p.done ? '' : '') + '" style="' + (p.done ? 'background:var(--green-tint);color:var(--green-deep)' : 'background:var(--orange-tint);color:var(--orange-deep)') + '">' + (p.done ? t('เสร็จแล้ว') : esc(p.phase)) + '</span> <span class="stat">' + fmt(p.size) + '</span><div class="files">' + p.files.map(f => '<a href="?action=download&pkg=' + encodeURIComponent(p.dir) + '&f=' + encodeURIComponent(f) + '">' + esc(f) + '</a>').join('') + '</div><div class="stat mono" style="word-break:break-all;margin-top:6px">' + t('URL สำหรับดึงจาก server ใหม่') + ': ' + esc(location.origin + location.pathname) + '</div></div><div>' + (p.done ? '' : '<button class="sec" onclick="resumeBackup(' + JSON.stringify(p.name) + ')">' + t('ทำต่อจากจุดเดิม') + '</button>') + '<button class="danger" onclick="if(confirm(t(\'ลบแพ็กเกจนี้?\')))api(\'delete\',{name:' + JSON.stringify(p.name) + '}).then(loadPackages)">' + t('ลบ') + '</button></div></div>').join('');
 }
 loadPackages();
 </script>

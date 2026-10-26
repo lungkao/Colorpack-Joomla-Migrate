@@ -14,13 +14,14 @@
  * วิธีใช้
  *  - แก้ค่า MIGRATE_KEY ด้านล่างให้เป็นรหัสของคุณเอง
  *  - อัปโหลดไฟล์นี้ + ไฟล์ .sql/.sql.gz ไว้ที่ root ของเว็บ (ที่เดียวกับ configuration.php)
- *  - เปิด https://your-domain/jmigrate.php?key=รหัสของคุณ
+ *  - เปิด https://your-domain/jmigrate.php แล้วกรอกรหัสในหน้า login (หรือเปิดด้วย ?key=รหัส ก็ได้)
  *  - ทำเสร็จแล้วกดปุ่ม "ลบไฟล์เครื่องมือนี้" ท้ายหน้า
  */
 
 const MIGRATE_KEY   = 'changeme123';   // <<< แก้เป็นรหัสของคุณ
 const STEP_SECONDS  = 8;               // เวลาทำงานต่อรอบ (วินาที) ต่ำกว่า timeout ของ server
-const TOOL_VERSION  = '1.1.0';
+const TOOL_TITLE   = 'Joomla Migrate Tool';
+const TOOL_VERSION  = '1.1.1';
 const BMC_URL       = 'https://buymeacoffee.com/cheuachatchai'; // Buy me a coffee
 const GZ_CHUNK      = 512 * 1024 * 1024; // เพดานขนาดที่แตก gz ต่อรอบ (bytes) ปกติจบที่เวลาก่อน
 
@@ -43,6 +44,7 @@ if (isset($_GET['lang'])) @setcookie('jm_lang', $LANG, time() + 86400 * 30, '/')
 $GLOBALS['JM_LANG'] = $LANG;
 function t($s) { return ($GLOBALS['JM_LANG'] === 'en' && isset($GLOBALS['JM_EN'][$s])) ? $GLOBALS['JM_EN'][$s] : $s; }
 $GLOBALS['JM_EN'] = [
+    'ออกจากระบบ' => 'Sign out',
     'กู้จากแพ็กเกจ (jbackup)' => 'Restore from package (jbackup)',
     'แพ็กเกจคือโฟลเดอร์ jbackup-ชื่อ/ ที่สร้างด้วย jbackup.php บน server เดิม มี db.sql.gz, site-partN.zip และ manifest.json ดึงตรงจาก server เดิมผ่าน HTTPS หรืออัปโหลดโฟลเดอร์มาวางที่ root ของเว็บนี้ก็ได้' => 'A package is a jbackup-<name>/ folder made by jbackup.php on the old server: db.sql.gz, site-partN.zip and manifest.json. Pull it straight from the old server over HTTPS, or upload the folder to this site\'s root.',
     'URL ของ jbackup.php บน server เดิม (ใช้ MIGRATE_KEY เดียวกัน)' => 'URL of jbackup.php on the old server (same MIGRATE_KEY)',
@@ -290,11 +292,44 @@ Tables with the same name will be replaced as the dump instructs.',
     '✔ ไม่พบความผิดปกติ' => '✔ No problems found',
 ];
 
+// ---------------------------------------------------------------- auth: login form (cookie) หรือ ?key= สำหรับเครื่องมือเรียกข้ามเครื่อง
+function auth_token() { return hash_hmac('sha256', 'jm-auth|' . __FILE__ . '|' . @filemtime(__FILE__), MIGRATE_KEY); }
+function auth_ok() {
+    $k = isset($_REQUEST['key']) ? (string)$_REQUEST['key'] : '';
+    if ($k !== '' && hash_equals(MIGRATE_KEY, $k)) return true;
+    $c = isset($_COOKIE['jm_auth']) ? (string)$_COOKIE['jm_auth'] : '';
+    return $c !== '' && hash_equals(auth_token(), $c);
+}
+function auth_cookie($on) { @setcookie('jm_auth', $on ? auth_token() : '', $on ? time() + 86400 : time() - 3600, dirname($_SERVER['SCRIPT_NAME']) ?: '/', '', !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off', true); }
+if (isset($_GET['logout'])) { auth_cookie(false); header('Location: ' . strtok($_SERVER['REQUEST_URI'], '?')); exit; }
+$loginErr = false;
+if (isset($_POST['login_key'])) {
+    if (hash_equals(MIGRATE_KEY, (string)$_POST['login_key'])) { auth_cookie(true); header('Location: ' . strtok($_SERVER['REQUEST_URI'], '?') . (isset($_POST['lang']) ? '?lang=' . ($_POST['lang'] === 'en' ? 'en' : 'th') : '')); exit; }
+    sleep(1); $loginErr = true;
+}
 $key = isset($_REQUEST['key']) ? (string)$_REQUEST['key'] : '';
-if (!hash_equals(MIGRATE_KEY, $key)) {
-    header('HTTP/1.1 403 Forbidden');
-    header('Content-Type: text/html; charset=utf-8');
-    echo t('<p style="font-family:sans-serif">ต้องเปิดด้วย <code>jmigrate.php?key=รหัสที่ตั้งไว้ในไฟล์</code></p>');
+if (!auth_ok()) {
+    if (isset($_REQUEST['action'])) { header('HTTP/1.1 403 Forbidden'); header('Content-Type: application/json; charset=utf-8'); echo json_encode(['ok' => false, 'msg' => 'auth required']); exit; }
+    $L = isset($_GET['lang']) ? $_GET['lang'] : (isset($_COOKIE['jm_lang']) ? $_COOKIE['jm_lang'] : 'th'); $en = $L === 'en';
+    header('HTTP/1.1 401 Unauthorized'); header('Content-Type: text/html; charset=utf-8'); header('X-Robots-Tag: noindex');
+    echo '<!DOCTYPE html><html lang="' . ($en ? 'en' : 'th') . '"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>' . TOOL_TITLE . '</title>
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;500;600&display=swap" rel="stylesheet">
+<style>body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#111;font-family:"Kanit","Noto Sans Thai",system-ui,sans-serif;color:#111;padding:24px;box-sizing:border-box}
+.box{background:#fff;border-radius:20px;padding:36px 32px;width:100%;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,.4)}
+h1{font-size:24px;font-weight:600;margin:18px 0 4px}p{margin:0 0 20px;color:#666;font-size:15px}
+input{width:100%;box-sizing:border-box;min-height:50px;padding:10px 14px;border:2px solid #e1e6eb;border-radius:12px;font:18px "Kanit",system-ui,sans-serif;letter-spacing:.1em}input:focus{outline:none;border-color:#3b8fe0;box-shadow:0 0 0 4px rgba(59,143,224,.28)}
+button{width:100%;min-height:50px;margin-top:14px;border:0;border-radius:14px;background:#3b8fe0;color:#fff;font:500 17px "Kanit",system-ui,sans-serif;cursor:pointer}button:hover{background:#2f7ac4}
+.err{background:#fde8e8;color:#b81b1c;border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:15px}
+.lang{text-align:center;margin-top:18px;font-size:14px}.lang a{color:#666;text-decoration:none;margin:0 6px}.lang a.on{color:#111;font-weight:600}
+.dots{display:flex;gap:6px}.dots i{width:12px;height:12px;border-radius:50%}</style></head><body>
+<form class="box" method="post" autocomplete="off">
+<div class="dots"><i style="background:#3b8fe0"></i><i style="background:#6cc04a"></i><i style="background:#f7941c"></i><i style="background:#ef2b2c"></i></div>
+<h1>' . TOOL_TITLE . '</h1><p>' . ($en ? 'Enter the access key set as <code>MIGRATE_KEY</code> in this file' : 'กรอกรหัสที่ตั้งไว้ใน <code>MIGRATE_KEY</code> ของไฟล์นี้') . '</p>'
+    . ($loginErr ? '<div class="err">' . ($en ? 'Wrong key' : 'รหัสไม่ถูกต้อง') . '</div>' : '')
+    . '<input type="password" name="login_key" placeholder="' . ($en ? 'Access key' : 'รหัสเข้าใช้') . '" autofocus required><input type="hidden" name="lang" value="' . ($en ? 'en' : 'th') . '">
+<button type="submit">' . ($en ? 'Sign in' : 'เข้าใช้งาน') . '</button>
+<div class="lang"><a href="?lang=th" class="' . ($en ? '' : 'on') . '">ไทย</a>|<a href="?lang=en" class="' . ($en ? 'on' : '') . '">EN</a></div>
+</form></body></html>';
     exit;
 }
 
@@ -1209,8 +1244,9 @@ $hasHt = file_exists(ROOT . '/.htaccess');
   </div>
   <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
     <span class="pill" style="background:var(--blue);color:#fff">v<?= TOOL_VERSION ?></span>
-    <span class="pill" style="background:rgba(255,255,255,.12);color:#fff;gap:8px"><a href="?key=<?= h(urlencode($key)) ?>&amp;lang=th" style="color:<?= $LANG === 'th' ? '#fff' : '#a0a6ad' ?>;text-decoration:none;font-weight:<?= $LANG === 'th' ? '600' : '400' ?>">ไทย</a><span style="color:#5B6572">|</span><a href="?key=<?= h(urlencode($key)) ?>&amp;lang=en" style="color:<?= $LANG === 'en' ? '#fff' : '#a0a6ad' ?>;text-decoration:none;font-weight:<?= $LANG === 'en' ? '600' : '400' ?>">EN</a></span>
+    <span class="pill" style="background:rgba(255,255,255,.12);color:#fff;gap:8px"><a href="?lang=th" style="color:<?= $LANG === 'th' ? '#fff' : '#a0a6ad' ?>;text-decoration:none;font-weight:<?= $LANG === 'th' ? '600' : '400' ?>">ไทย</a><span style="color:#5B6572">|</span><a href="?lang=en" style="color:<?= $LANG === 'en' ? '#fff' : '#a0a6ad' ?>;text-decoration:none;font-weight:<?= $LANG === 'en' ? '600' : '400' ?>">EN</a></span>
     <span class="pill mono" style="background:rgba(255,255,255,.12);color:#fff"><?= h(ROOT) ?></span>
+    <a href="?logout=1" class="pill" style="background:rgba(255,255,255,.12);color:#fff;text-decoration:none"><?= t('ออกจากระบบ') ?></a>
   </div>
 </div></header>
 <div class="wrap">
@@ -1412,7 +1448,7 @@ const t = s => (T[s] !== undefined ? T[s] : s);
 const $ = id => document.getElementById(id);
 const dbData = () => ({host:$('host').value, user:$('user').value, pass:$('pass').value, db:$('db').value, prefix:$('prefix').value});
 async function api(action, data) {
-  const r = await fetch(location.pathname + '?key=' + encodeURIComponent(KEY) + '&action=' + action, {
+  const r = await fetch(location.pathname + '?action=' + action + (KEY ? '&key=' + encodeURIComponent(KEY) : ''), {
     method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(data || {})});
   const txt = await r.text();
   try { return JSON.parse(txt); } catch(e) { return {ok:false, msg:t('server ตอบกลับไม่ใช่ JSON (HTTP ') + r.status + '): ' + txt.slice(0,300)}; }

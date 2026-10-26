@@ -1,4 +1,4 @@
-# Colorpack Joomla Migrate V1.1.0
+# Colorpack Joomla Migrate V1.1.1
 
 **[EN]** Single-file PHP tool for moving a Joomla 3 / 4 / 5 site to a new server.
 Fixes `configuration.php` paths, tests the database, imports huge `.sql` / `.sql.gz` dumps in
@@ -15,7 +15,7 @@ upload → open → migrate → delete.
 - [`jmigrate.php`](jmigrate.php) — on the **new** server: restore package, import DB, fix config / วางบน server **ใหม่**: กู้แพ็กเกจ นำเข้า DB แก้ config
 - [`jbackup.php`](jbackup.php) — on the **old** server: build the migration package (files + DB) / วางบน server **เดิม**: สร้างแพ็กเกจย้ายเว็บ (ไฟล์ + DB)
 
-(V1.1.0 · requires PHP 7.0+ with `mysqli` and `zlib` / ต้องใช้ PHP 7.0+ พร้อม `mysqli` และ `zlib`)
+(V1.1.1 · requires PHP 7.0+ with `mysqli` and `zlib` / ต้องใช้ PHP 7.0+ พร้อม `mysqli` และ `zlib`)
 
 **Interface / หน้าจอ:** ไทย / English — switch in the top bar / สลับได้ที่แถบด้านบน
 
@@ -33,7 +33,7 @@ upload → open → migrate → delete.
    ```
 2. Upload `jmigrate.php` **and your database dump** (`.sql`, `.sql.gz` or a DirectAdmin `.gz` backup)
    into the site root — the same folder as `configuration.php`.
-3. Open `https://yoursite.com/jmigrate.php?key=YOUR_KEY`.
+3. Open `https://yoursite.com/jmigrate.php` and enter the key on the login screen (`?key=…` in the URL still works).
 4. Work down the page: **1** environment → **2** database & config → **3** import → **4** tools → **5** delete the tool.
 
 > **Delete the tool from the server when you are done** (there is a button for it). It can rewrite
@@ -43,7 +43,7 @@ upload → open → migrate → delete.
 
 1. แก้ `MIGRATE_KEY` ในไฟล์เป็นรหัสของคุณเอง
 2. อัปโหลด `jmigrate.php` และไฟล์ dump ฐานข้อมูล ไปไว้ที่ root ของเว็บ (ที่เดียวกับ `configuration.php`)
-3. เปิด `https://โดเมน/jmigrate.php?key=รหัสของคุณ`
+3. เปิด `https://โดเมน/jmigrate.php` แล้วกรอกรหัสในหน้า login (จะเปิดด้วย `?key=รหัส` ต่อท้าย URL ก็ยังได้)
 4. ทำตามลำดับ **1** สภาพแวดล้อม → **2** ฐานข้อมูลและ config → **3** นำเข้า → **4** เครื่องมือเสริม → **5** ลบเครื่องมือ
 
 > ทำเสร็จแล้ว **ลบไฟล์ออกจาก server ทันที** (มีปุ่มให้) เพราะเครื่องมือนี้แก้ `configuration.php` และฐานข้อมูลได้
@@ -51,7 +51,7 @@ upload → open → migrate → delete.
 ### Full-site migration (files + database) / ย้ายทั้งเว็บ (ไฟล์ + ฐานข้อมูล)
 
 **[EN]** Use the same `MIGRATE_KEY` in both files.
-1. **Old server:** upload `jbackup.php` to the site root, open `jbackup.php?key=…`, press **Build package**. It dumps the database table by table and zips the site files in resumable rounds into `jbackup-<name>/` (db.sql.gz, site-partN.zip, manifest.json with checksums).
+1. **Old server:** upload `jbackup.php` to the site root, open `jbackup.php`, sign in with the key, press **Build package**. It dumps the database table by table and zips the site files in resumable rounds into `jbackup-<name>/` (db.sql.gz, site-partN.zip, manifest.json with checksums).
 2. **New server:** upload `jmigrate.php` to the empty site root, open it, go to **3 Restore from package**, paste the old server's `jbackup.php` URL, press **List packages**, pick one, press **Pull and extract**. Files are pulled over HTTPS in 8 MB ranges, verified by checksum and extracted in rounds. (Or upload the `jbackup-*` folder yourself and pick it from the list.)
 3. **4 Import database** — `db.sql.gz` from the package is pre-selected, the table prefix is filled from the manifest.
 4. **2 Database & configuration.php** — enter the new DB credentials and save; paths are auto-detected.
@@ -59,7 +59,7 @@ upload → open → migrate → delete.
 6. Section 5 tools (`.htaccess`, cache), then delete both tools and the package folders.
 
 **[TH]** ใช้ `MIGRATE_KEY` เดียวกันทั้งสองไฟล์
-1. **server เดิม:** อัปโหลด `jbackup.php` ไว้ที่ root ของเว็บ เปิด `jbackup.php?key=…` กด **สร้างแพ็กเกจ** ระบบจะ dump ฐานข้อมูลทีละตาราง และ zip ไฟล์เว็บแบบแบ่งรอบ ได้โฟลเดอร์ `jbackup-<ชื่อ>/` (db.sql.gz, site-partN.zip, manifest.json พร้อม checksum)
+1. **server เดิม:** อัปโหลด `jbackup.php` ไว้ที่ root ของเว็บ เปิด `jbackup.php` กรอกรหัส กด **สร้างแพ็กเกจ** ระบบจะ dump ฐานข้อมูลทีละตาราง และ zip ไฟล์เว็บแบบแบ่งรอบ ได้โฟลเดอร์ `jbackup-<ชื่อ>/` (db.sql.gz, site-partN.zip, manifest.json พร้อม checksum)
 2. **server ใหม่:** อัปโหลด `jmigrate.php` ไว้ที่ root ว่าง ๆ เปิด → ข้อ **3 กู้จากแพ็กเกจ** → วาง URL ของ `jbackup.php` บน server เดิม → กด **ดูแพ็กเกจบน server เดิม** → เลือก → กด **ดึงและแตกแพ็กเกจ** ระบบจะดึงไฟล์ผ่าน HTTPS ทีละ 8 MB ตรวจ checksum แล้วแตกไฟล์แบบแบ่งรอบ (หรืออัปโหลดโฟลเดอร์ `jbackup-*` มาวางเองแล้วเลือกจากรายการ)
 3. **ข้อ 4 นำเข้าฐานข้อมูล** — เลือก `db.sql.gz` จากแพ็กเกจให้แล้ว prefix เติมจาก manifest
 4. **ข้อ 2 ฐานข้อมูลและ configuration.php** — กรอก DB ใหม่แล้วบันทึก path ตรวจให้อัตโนมัติ
@@ -165,7 +165,7 @@ SEF, URL Rewriting, System Cache พร้อมปุ่มลัด *โหม
 
 | Option | Meaning | ความหมาย |
 |--------|---------|----------|
-| `MIGRATE_KEY` | Access key, passed as `?key=` (required) | รหัสเข้าใช้ ส่งผ่าน `?key=` (จำเป็น) |
+| `MIGRATE_KEY` | Access key for the login screen (required; also accepted as `?key=`) | รหัสเข้าใช้สำหรับหน้า login (จำเป็น; ใส่เป็น `?key=` ก็ได้) |
 | `STEP_SECONDS` | Seconds of work per round (default 8; lower it if your server times out early) | เวลาทำงานต่อรอบ (ค่าเริ่มต้น 8 ถ้า server timeout ไวให้ลดลง) |
 | `GZ_CHUNK` | Upper bound of bytes extracted from a `.gz` per round | เพดานจำนวน byte ที่แตกจาก `.gz` ต่อรอบ |
 | `BMC_URL` | Buy-me-a-coffee link shown in the footer | ลิงก์ Buy me a coffee ที่แสดงใน footer |
@@ -193,6 +193,11 @@ SEF, URL Rewriting, System Cache พร้อมปุ่มลัด *โหม
 ---
 
 ## Changelog / บันทึกการแก้ไข
+
+### 1.1.1 — 2026-10-26
+**[EN]** Login screen: the access key is entered in a password field instead of the URL (a signed cookie keeps you signed in for 24 h; `?key=` still works for scripts and for server-to-server pulls). Sign-out link in the header. Wrong key waits 1 s.
+
+**[TH]** หน้า login: กรอกรหัสในช่องรหัสผ่านแทนการใส่ใน URL (cookie แบบเซ็นลายเซ็นจำไว้ 24 ชม.; `?key=` ยังใช้ได้สำหรับสคริปต์และการดึงข้ามเครื่อง) มีปุ่มออกจากระบบที่แถบบน รหัสผิดหน่วง 1 วินาที
 
 ### 1.1.0 — 2026-10-26
 **[EN]** Full-site migration.
