@@ -21,7 +21,7 @@
 const MIGRATE_KEY   = 'changeme123';   // <<< แก้เป็นรหัสของคุณ
 const STEP_SECONDS  = 8;               // เวลาทำงานต่อรอบ (วินาที) ต่ำกว่า timeout ของ server
 const TOOL_TITLE   = 'Joomla Migrate Tool';
-const TOOL_VERSION  = '1.1.1';
+const TOOL_VERSION  = '1.2.0';
 const BMC_URL       = 'https://buymeacoffee.com/cheuachatchai'; // Buy me a coffee
 const GZ_CHUNK      = 512 * 1024 * 1024; // เพดานขนาดที่แตก gz ต่อรอบ (bytes) ปกติจบที่เวลาก่อน
 
@@ -44,6 +44,38 @@ if (isset($_GET['lang'])) @setcookie('jm_lang', $LANG, time() + 86400 * 30, '/')
 $GLOBALS['JM_LANG'] = $LANG;
 function t($s) { return ($GLOBALS['JM_LANG'] === 'en' && isset($GLOBALS['JM_EN'][$s])) ? $GLOBALS['JM_EN'][$s] : $s; }
 $GLOBALS['JM_EN'] = [
+    'แพ็กเกจอยู่ที่ไหน' => 'Where is the package?',
+    'ไม่ต้องดาวน์โหลด แค่แตกไฟล์' => 'no download needed, just extract',
+    'ยังไม่พบโฟลเดอร์ jbackup-* ที่ root — อัปโหลดมาวางแล้วรีเฟรช' => 'no jbackup-* folder in the root yet — upload one and refresh',
+    'ดึงจาก server เดิม' => 'Pull from the old server',
+    'ใส่ URL ของ jbackup.php ระบบจะดาวน์โหลดทุกส่วนมาเอง' => 'Enter the jbackup.php URL and every part is downloaded for you',
+    'แพ็กเกจนี้อยู่บน server แล้ว ไม่ต้องดาวน์โหลด กด "แตกแพ็กเกจ" ได้เลย' => 'This package is already on the server — nothing to download, just press "Extract package"',
+    'แตกแพ็กเกจ' => 'Extract package',
+    'แพ็กเกจคือโฟลเดอร์ jbackup-ชื่อ/ ที่สร้างด้วย jbackup.php บน server เดิม มี db.sql.gz, site-partN.zip และ manifest.json' => 'A package is a jbackup-<name>/ folder made by jbackup.php on the old server: db.sql.gz, site-partN.zip and manifest.json.',
+    'ทำหลังนำเข้าฐานข้อมูลแล้ว ถ้าเปลี่ยนโดเมนหรือ path ของเว็บ รองรับค่าที่เป็น JSON และ serialized (params ของ Joomla, YOOtheme, Gantry) ไม่ทำให้ข้อมูลพัง ถ้าโดเมนและ path เหมือนเดิมให้ข้ามขั้นนี้' => 'Run after the database import if the domain or site path changed. Handles JSON and serialized values (Joomla, YOOtheme, Gantry params) safely. Skip this step if domain and path are unchanged.',
+    'สถานะตอนนี้' => 'Current status',
+    'จะทำแบบไหน' => 'How do you want to migrate?',
+    'ย้ายทั้งเว็บจากแพ็กเกจ jbackup' => 'Migrate the whole site from a jbackup package',
+    'ดึงไฟล์ + ฐานข้อมูลจาก server เดิมมาเอง แล้วแก้ config ให้' => 'Pulls files + database from the old server, then fixes the config',
+    'อัปโหลดไฟล์เองแล้ว นำเข้าฐานข้อมูล + แก้ config' => 'Files already uploaded: import database + fix config',
+    'ไฟล์เว็บอยู่บน server นี้แล้ว เหลือ .sql และ configuration.php' => 'The site files are on this server; only the .sql and configuration.php are left',
+    'ไฟล์เว็บ' => 'Site files',
+    'เชื่อมต่อฐานข้อมูล' => 'Database connection',
+    'ข้อมูลในฐานข้อมูล' => 'Tables in database',
+    'ย้อนกลับ' => 'Back',
+    'ถัดไป' => 'Next',
+    'โฟลเดอร์นี้ยังว่าง ยังไม่มีไฟล์เว็บ' => 'This folder is empty — no site files yet',
+    'ถ้ามีแพ็กเกจจาก jbackup.php ให้ "ย้ายทั้งเว็บจากแพ็กเกจ" ระบบจะดึงไฟล์และฐานข้อมูลมาให้ครบ ถ้าจะอัปโหลดไฟล์เว็บเองผ่าน FTP ให้อัปโหลดก่อนแล้วค่อยรีเฟรชหน้านี้' => 'If you have a jbackup.php package, choose "Migrate the whole site from a package" and it pulls files and database for you. If you upload the files yourself over FTP, do that first and refresh this page.',
+    'มีไฟล์เว็บแล้ว แต่ไม่พบ configuration.php' => 'Site files are here, but configuration.php is missing',
+    'อัปโหลด configuration.php จาก server เดิมมาวางที่ root หรือกู้จากแพ็กเกจ jbackup ซึ่งมีไฟล์นี้อยู่แล้ว' => 'Upload configuration.php from the old server to the root, or restore from a jbackup package (it contains the file).',
+    'มีไฟล์เว็บและ configuration.php แล้ว แต่เชื่อมต่อฐานข้อมูลไม่ได้' => 'Site files and configuration.php are here, but the database connection fails',
+    'ข้อมูล DB ใน configuration.php ยังเป็นของ server เดิม ไปกรอก host / database / user / password ของ server ใหม่แล้วบันทึก' => 'The DB settings in configuration.php still belong to the old server — enter the new host / database / user / password and save.',
+    'เชื่อมต่อฐานข้อมูลได้แล้ว แต่ยังไม่มีตาราง' => 'Database connected, but it has no tables yet',
+    'นำเข้าไฟล์ .sql / .sql.gz (หรือ db.sql.gz จากแพ็กเกจ) แล้วกลับมาบันทึก prefix' => 'Import the .sql / .sql.gz (or db.sql.gz from the package), then come back and save the prefix.',
+    'ฐานข้อมูลมีข้อมูลแล้ว แต่ configuration.php ยังไม่ตรงกับ server นี้' => 'The database has data, but configuration.php does not match this server yet',
+    'ตรวจ prefix และ path ในข้อ "ฐานข้อมูล และ configuration.php" แล้วบันทึก' => 'Check the prefix and paths under "Database and configuration.php" and save.',
+    'ทุกอย่างพร้อมแล้ว' => 'Everything is ready',
+    'เปิดเว็บทดสอบ ถ้าโอเคให้ใช้เครื่องมือเสริม (.htaccess, cache) แล้วลบเครื่องมือนี้ทิ้ง' => 'Open the site and test it. If it works, run the extra tools (.htaccess, cache) and delete this tool.',
     'ออกจากระบบ' => 'Sign out',
     'กู้จากแพ็กเกจ (jbackup)' => 'Restore from package (jbackup)',
     'แพ็กเกจคือโฟลเดอร์ jbackup-ชื่อ/ ที่สร้างด้วย jbackup.php บน server เดิม มี db.sql.gz, site-partN.zip และ manifest.json ดึงตรงจาก server เดิมผ่าน HTTPS หรืออัปโหลดโฟลเดอร์มาวางที่ root ของเว็บนี้ก็ได้' => 'A package is a jbackup-<name>/ folder made by jbackup.php on the old server: db.sql.gz, site-partN.zip and manifest.json. Pull it straight from the old server over HTTPS, or upload the folder to this site\'s root.',
@@ -73,7 +105,7 @@ $GLOBALS['JM_EN'] = [
     'ส่วน' => 'part',
     'คำเตือน' => 'Warnings',
     'เสร็จแล้ว' => 'Finished',
-    'ต่อไป: ข้อ 4 นำเข้าฐานข้อมูล (เลือกไฟล์ db.sql.gz ให้แล้ว) → ข้อ 2 บันทึก configuration.php → แทนที่โดเมน/path ด้านล่าง' => 'Next: step 4 import the database (db.sql.gz is pre-selected) → step 2 save configuration.php → replace domain/path below',
+    'ต่อไป: กด "ถัดไป" เพื่อนำเข้าฐานข้อมูล (เลือกไฟล์ db.sql.gz ให้แล้ว)' => 'Next: step 4 import the database (db.sql.gz is pre-selected) → step 2 save configuration.php → replace domain/path below',
     'ไม่มีคู่ข้อความที่จะแทนที่' => 'Nothing to replace',
     'แทนที่ในฐานข้อมูลจริง? ควรสำรองหรือทดสอบก่อน' => 'Replace in the live database? Back up or test first.',
     'ทดสอบ' => 'Test',
@@ -1172,6 +1204,42 @@ $ob = ini_get('open_basedir');
 list($tmpOk, $tmpMsg) = path_status(isset($cfg['tmp_path']) ? $cfg['tmp_path'] : '');
 list($logOk, $logMsg) = path_status(isset($cfg['log_path']) ? $cfg['log_path'] : '');
 $hasHt = file_exists(ROOT . '/.htaccess');
+// ---- สถานะรวม สำหรับหน้าเริ่มต้น
+$st_files = is_file(ROOT . '/index.php') && is_dir(ROOT . '/administrator') && is_dir(ROOT . '/libraries');
+$st_cfg = (bool)$cfg;
+$st_db = false; $st_tables = 0; $st_prefix_ok = false;
+if ($cfg && !empty($cfg['host'])) {
+    $e = ''; $l = db_connect($cfg['host'], $cfg['user'] ?? '', $cfg['password'] ?? '', $cfg['db'] ?? '', $e);
+    if ($l) { $st_db = true; $pre = list_prefixes($l); $st_tables = array_sum(array_column($pre, 'count')); $st_prefix_ok = isset($pre[$cfg['dbprefix'] ?? '']) && $pre[$cfg['dbprefix']]['joomla']; mysqli_close($l); }
+}
+$st_paths = $tmpOk && $logOk;
+$st_pkg = count($rsLocal) > 0;
+$st_import_done = !empty($state['done']);
+// สถานการณ์ที่เดาได้
+if (!$st_files && !$st_cfg) $situation = 'empty';            // โฟลเดอร์ว่าง → กู้จากแพ็กเกจ หรืออัปโหลดไฟล์ก่อน
+elseif ($st_files && !$st_cfg) $situation = 'nocfg';         // มีไฟล์ แต่ไม่มี configuration.php
+elseif (!$st_db) $situation = 'nodb';                        // config ชี้ DB ไม่ได้
+elseif ($st_tables === 0) $situation = 'emptydb';            // DB ว่าง → นำเข้า
+elseif (!$st_prefix_ok || !$st_paths) $situation = 'fixcfg'; // ข้อมูลมีแล้ว แต่ config ยังไม่ตรง
+else $situation = 'ready';
+$checks = [
+    ['id' => 'card-restore', 'ok' => $st_files, 'label' => t('ไฟล์เว็บ')],
+    ['id' => 'card-db', 'ok' => $st_cfg, 'label' => 'configuration.php'],
+    ['id' => 'card-db', 'ok' => $st_db, 'label' => t('เชื่อมต่อฐานข้อมูล')],
+    ['id' => 'card-import', 'ok' => $st_tables > 0, 'label' => t('ข้อมูลในฐานข้อมูล') . ($st_tables ? " ($st_tables)" : '')],
+    ['id' => 'card-db', 'ok' => $st_prefix_ok, 'label' => 'prefix'],
+    ['id' => 'card-db', 'ok' => $st_paths, 'label' => 'tmp/log path'],
+    ['id' => 'card-tools', 'ok' => $hasHt, 'label' => '.htaccess'],
+];
+$sitText = [
+    'empty' => [t('โฟลเดอร์นี้ยังว่าง ยังไม่มีไฟล์เว็บ'), t('ถ้ามีแพ็กเกจจาก jbackup.php ให้ "ย้ายทั้งเว็บจากแพ็กเกจ" ระบบจะดึงไฟล์และฐานข้อมูลมาให้ครบ ถ้าจะอัปโหลดไฟล์เว็บเองผ่าน FTP ให้อัปโหลดก่อนแล้วค่อยรีเฟรชหน้านี้')],
+    'nocfg' => [t('มีไฟล์เว็บแล้ว แต่ไม่พบ configuration.php'), t('อัปโหลด configuration.php จาก server เดิมมาวางที่ root หรือกู้จากแพ็กเกจ jbackup ซึ่งมีไฟล์นี้อยู่แล้ว')],
+    'nodb' => [t('มีไฟล์เว็บและ configuration.php แล้ว แต่เชื่อมต่อฐานข้อมูลไม่ได้'), t('ข้อมูล DB ใน configuration.php ยังเป็นของ server เดิม ไปกรอก host / database / user / password ของ server ใหม่แล้วบันทึก')],
+    'emptydb' => [t('เชื่อมต่อฐานข้อมูลได้แล้ว แต่ยังไม่มีตาราง'), t('นำเข้าไฟล์ .sql / .sql.gz (หรือ db.sql.gz จากแพ็กเกจ) แล้วกลับมาบันทึก prefix')],
+    'fixcfg' => [t('ฐานข้อมูลมีข้อมูลแล้ว แต่ configuration.php ยังไม่ตรงกับ server นี้'), t('ตรวจ prefix และ path ในข้อ "ฐานข้อมูล และ configuration.php" แล้วบันทึก')],
+    'ready' => [t('ทุกอย่างพร้อมแล้ว'), t('เปิดเว็บทดสอบ ถ้าโอเคให้ใช้เครื่องมือเสริม (.htaccess, cache) แล้วลบเครื่องมือนี้ทิ้ง')],
+];
+$flowDefault = ($situation === 'empty' || $situation === 'nocfg') ? 'package' : 'manual';
 ?>
 <!DOCTYPE html>
 <html lang="<?= $LANG ?>">
@@ -1205,7 +1273,9 @@ $hasHt = file_exists(ROOT . '/.htaccess');
   h2[data-n="3"]::before{background:var(--orange);color:#111}
   h2[data-n="4"]::before{background:var(--red)}
   h2[data-n="5"]::before{background:var(--blue)}
-  h2[data-n="6"]::before{background:var(--ink);color:var(--paper)}
+  h2[data-n="6"]::before{background:var(--green);color:#111}
+  h2[data-n="7"]::before{background:var(--orange);color:#111}
+  h2[data-n="8"]::before{background:var(--ink);color:var(--paper)}
   label{display:block;font-size:15px;font-weight:500;color:var(--gray);margin:16px 0 8px;line-height:1.35}
   input[type=text],input[type=password],select{width:100%;min-height:48px;padding:10px 14px;border:2px solid var(--line);border-radius:var(--radius-sm);font:17px/24px var(--font-body);background:var(--paper);color:var(--ink)}
   input:focus,select:focus{outline:none;border-color:var(--blue);box-shadow:var(--shadow-focus)}
@@ -1216,6 +1286,7 @@ $hasHt = file_exists(ROOT . '/.htaccess');
   button.danger{background:var(--paper);color:var(--red-deep);border-color:var(--red)}button.danger:hover{background:var(--red-tint)} button:disabled{opacity:.45;cursor:default}
   .ok{color:var(--green-deep);font-weight:500}.bad{color:var(--red-deep);font-weight:500}
   .pill{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:999px;font-size:15px;font-weight:500;line-height:20px;background:var(--ground);color:var(--gray)}
+  .info{background:var(--green-tint);color:var(--green-deep);border-radius:var(--radius-md);padding:14px 16px;font-size:17px;line-height:1.55;margin-top:12px}
   .warn{background:var(--orange-tint);color:var(--orange-deep);border-radius:var(--radius-md);padding:16px 18px;font-size:17px;line-height:1.55;margin-bottom:4px}
   .mono,code{font-family:var(--font-mono);font-size:15px}
   code{background:var(--ground);border:1px solid var(--line);padding:1px 7px;border-radius:6px}
@@ -1232,6 +1303,18 @@ $hasHt = file_exists(ROOT . '/.htaccess');
   .cp-footer .mark{display:flex;align-items:center;gap:16px;color:var(--ink)}
   .cp-footer .co{font-weight:600;color:var(--ink);font-size:17px}.cp-footer .co-en{font-size:13px;letter-spacing:.08em}
   .cp-footer .cr{text-align:right;line-height:1.7} @media(max-width:720px){.cp-footer .cr{text-align:left}td:first-child{width:130px}}
+  .flows{display:grid;grid-template-columns:repeat(2, minmax(0, 1fr));gap:14px;margin-top:10px} @media(max-width:720px){.flows{grid-template-columns:1fr}}
+  .flow{margin:0;min-height:0;padding:16px 18px;background:var(--paper);color:var(--ink);border:2px solid var(--line);border-radius:var(--radius-md);text-align:left;display:flex;gap:14px;align-items:center;font-weight:400;line-height:1.4}
+  .flow:hover{background:var(--paper);border-color:var(--ink)} .flow.on{border-color:var(--blue);box-shadow:var(--shadow-focus)}
+  .flow .fi{width:40px;height:40px;border-radius:12px;color:#fff;font-weight:600;font-size:18px;display:inline-flex;align-items:center;justify-content:center;flex:none}
+  .flow small{display:block;font-size:15px;color:var(--gray)}
+  .stepper{list-style:none;margin:22px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:8px}
+  .stepper li{display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border-radius:999px;background:var(--ground);color:var(--gray);font-size:15px;cursor:pointer;border:2px solid transparent}
+  .stepper li.cur{background:var(--blue-tint);color:var(--blue-deep);border-color:var(--blue)} .stepper li.done{background:var(--green-tint);color:var(--green-deep)}
+  .stepper li i{width:22px;height:22px;border-radius:50%;background:var(--paper);display:inline-flex;align-items:center;justify-content:center;font-style:normal;font-size:13px;font-weight:600}
+  .card.step.collapsed > *:not(h2){display:none} .card.step.collapsed h2{margin-bottom:0;cursor:pointer} .card.step h2{cursor:pointer}
+  .card.step.hidden{display:none}
+  .nextbar{display:flex;justify-content:flex-end;gap:10px;margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}
   .bmc{display:inline-flex;align-items:center;gap:8px;margin-top:8px;padding:8px 16px;border-radius:999px;background:var(--orange);color:#111;font-weight:500;text-decoration:none;font-size:15px}.bmc:hover{filter:brightness(.95);color:#111}
 </style>
 </head>
@@ -1254,11 +1337,32 @@ $hasHt = file_exists(ROOT . '/.htaccess');
 <?php if (MIGRATE_KEY === 'changeme123'): ?>
 <div class="warn"><?= t('ยังใช้รหัส key ค่าเริ่มต้นอยู่ ควรแก้ค่า') ?> <code>MIGRATE_KEY</code> <?= t('ในไฟล์ก่อนใช้งานจริง และลบไฟล์นี้ทันทีเมื่อเสร็จ') ?></div>
 <?php endif; ?>
-<?php if (!$cfg): ?>
-<div class="warn"><?= t('ไม่พบ') ?> <code>configuration.php</code> <?= t('ในโฟลเดอร์นี้ (') ?><?= h(ROOT) ?><?= t(') ให้อัปโหลดไฟล์เว็บให้ครบก่อน') ?></div>
-<?php endif; ?>
+<div class="card" id="card-start">
+  <div style="display:flex;flex-wrap:wrap;gap:16px 28px;align-items:flex-start;justify-content:space-between">
+    <div style="flex:1 1 420px;min-width:0">
+      <div style="font-size:15px;font-weight:500;color:var(--gray)"><?= t('สถานะตอนนี้') ?></div>
+      <div style="font-size:24px;font-weight:600;line-height:1.3;margin:4px 0 8px" class="<?= $situation === 'ready' ? 'ok' : '' ?>"><?= $sitText[$situation][0] ?></div>
+      <div style="font-size:17px;color:var(--gray)"><?= $sitText[$situation][1] ?></div>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;flex:0 1 380px">
+      <?php foreach ($checks as $c): ?><a href="#<?= $c['id'] ?>" onclick="openCard('<?= $c['id'] ?>')" class="pill" style="text-decoration:none;<?= $c['ok'] ? 'background:var(--green-tint);color:var(--green-deep)' : 'background:var(--red-tint);color:var(--red-deep)' ?>"><?= $c['ok'] ? '✔' : '✘' ?> <?= $c['label'] ?></a><?php endforeach; ?>
+    </div>
+  </div>
+  <div style="margin-top:22px;font-size:15px;font-weight:500;color:var(--gray)"><?= t('จะทำแบบไหน') ?></div>
+  <div class="flows">
+    <button type="button" class="flow" data-flow="package" onclick="setFlow('package')">
+      <span class="fi" style="background:var(--orange)">A</span>
+      <span><b><?= t('ย้ายทั้งเว็บจากแพ็กเกจ jbackup') ?></b><small><?= t('ดึงไฟล์ + ฐานข้อมูลจาก server เดิมมาเอง แล้วแก้ config ให้') ?></small></span>
+    </button>
+    <button type="button" class="flow" data-flow="manual" onclick="setFlow('manual')">
+      <span class="fi" style="background:var(--blue)">B</span>
+      <span><b><?= t('อัปโหลดไฟล์เองแล้ว นำเข้าฐานข้อมูล + แก้ config') ?></b><small><?= t('ไฟล์เว็บอยู่บน server นี้แล้ว เหลือ .sql และ configuration.php') ?></small></span>
+    </button>
+  </div>
+  <ol class="stepper" id="stepper"></ol>
+</div>
 
-<div class="card">
+<div class="card step" id="card-env">
   <h2 data-n="1"><?= t('สภาพแวดล้อม server ใหม่') ?></h2>
   <table>
     <tr><td><?= t('root เว็บ') ?></td><td class="mono"><?= h(ROOT) ?></td></tr>
@@ -1270,7 +1374,7 @@ $hasHt = file_exists(ROOT . '/.htaccess');
   </table>
 </div>
 
-<div class="card">
+<div class="card step" id="card-db">
   <h2 data-n="2"><?= t('ฐานข้อมูล และ configuration.php') ?></h2>
   <div class="row">
     <div><label>Host</label><input type="text" id="host" value="<?= h($cfg['host'] ?? 'localhost') ?>"></div>
@@ -1298,7 +1402,7 @@ $hasHt = file_exists(ROOT . '/.htaccess');
   <div id="cfgres" class="stat" style="margin-top:8px"></div>
 </div>
 
-<div class="card">
+<div class="card step" id="card-health">
   <h2 data-n="2.1"><?= t('ตรวจสุขภาพ configuration.php') ?></h2>
   <?php list($cfgIssues, $cfgFixable) = check_config(); ?>
   <div id="cfgissues">
@@ -1310,7 +1414,7 @@ $hasHt = file_exists(ROOT . '/.htaccess');
   <div id="fixres" class="stat" style="margin-top:8px"></div>
 </div>
 
-<div class="card">
+<div class="card step" id="card-toggles">
   <h2 data-n="2.2"><?= t('คอนฟิกสำหรับช่วงย้ายเว็บ') ?></h2>
   <div class="row">
     <div>
@@ -1337,13 +1441,28 @@ $hasHt = file_exists(ROOT . '/.htaccess');
   <div id="togres" class="stat" style="margin-top:8px"></div>
 </div>
 
-<div class="card">
+<div class="card step" id="card-restore">
   <h2 data-n="3"><?= t('กู้จากแพ็กเกจ (jbackup)') ?></h2>
-  <div class="stat"><?= t('แพ็กเกจคือโฟลเดอร์ jbackup-ชื่อ/ ที่สร้างด้วย jbackup.php บน server เดิม มี db.sql.gz, site-partN.zip และ manifest.json ดึงตรงจาก server เดิมผ่าน HTTPS หรืออัปโหลดโฟลเดอร์มาวางที่ root ของเว็บนี้ก็ได้') ?></div>
-  <label><?= t('URL ของ jbackup.php บน server เดิม (ใช้ MIGRATE_KEY เดียวกัน)') ?></label>
-  <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-start">
-    <input type="text" id="rs_source" placeholder="https://old-domain.com/jbackup.php" style="flex:1 1 360px">
-    <button class="sec" style="margin-top:0" onclick="rsRemoteList()"><?= t('ดูแพ็กเกจบน server เดิม') ?></button>
+  <div class="stat"><?= t('แพ็กเกจคือโฟลเดอร์ jbackup-ชื่อ/ ที่สร้างด้วย jbackup.php บน server เดิม มี db.sql.gz, site-partN.zip และ manifest.json') ?></div>
+  <div style="margin-top:14px;font-size:15px;font-weight:500;color:var(--gray)"><?= t('แพ็กเกจอยู่ที่ไหน') ?></div>
+  <div class="flows" style="margin-top:8px">
+    <button type="button" class="flow" id="src_local" onclick="rsSource('local')" <?= $rsLocal ? '' : 'style="opacity:.6"' ?>>
+      <span class="fi" style="background:var(--green);color:#111">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></span>
+      <span><b><?= t('อยู่บน server นี้แล้ว') ?></b><small><?= $rsLocal ? t('พบ') . ' ' . count($rsLocal) . ' ' . t('แพ็กเกจ') . ' — ' . t('ไม่ต้องดาวน์โหลด แค่แตกไฟล์') : t('ยังไม่พบโฟลเดอร์ jbackup-* ที่ root — อัปโหลดมาวางแล้วรีเฟรช') ?></small></span>
+    </button>
+    <button type="button" class="flow" id="src_remote" onclick="rsSource('remote')">
+      <span class="fi" style="background:var(--orange);color:#111">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M4 19h16"/></svg></span>
+      <span><b><?= t('ดึงจาก server เดิม') ?></b><small><?= t('ใส่ URL ของ jbackup.php ระบบจะดาวน์โหลดทุกส่วนมาเอง') ?></small></span>
+    </button>
+  </div>
+  <div id="src_remote_box" style="display:none">
+    <label><?= t('URL ของ jbackup.php บน server เดิม (ใช้ MIGRATE_KEY เดียวกัน)') ?></label>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-start">
+      <input type="text" id="rs_source" placeholder="https://old-domain.com/jbackup.php" style="flex:1 1 360px">
+      <button class="sec" style="margin-top:0" onclick="rsRemoteList()"><?= t('ดูแพ็กเกจบน server เดิม') ?></button>
+    </div>
   </div>
   <label><?= t('แพ็กเกจ') ?></label>
   <select id="rs_pkg">
@@ -1352,6 +1471,7 @@ $hasHt = file_exists(ROOT . '/.htaccess');
     <?php endforeach; ?>
     <?php if (!$rsLocal): ?><option value=""><?= t('ยังไม่มีแพ็กเกจ — ใส่ URL ด้านบนแล้วกด "ดูแพ็กเกจบน server เดิม" หรืออัปโหลดโฟลเดอร์ jbackup-* มาวางแล้วรีเฟรช') ?></option><?php endif; ?>
   </select>
+  <div id="rs_localnote" class="info" style="display:none"><?= t('แพ็กเกจนี้อยู่บน server แล้ว ไม่ต้องดาวน์โหลด กด "แตกแพ็กเกจ" ได้เลย') ?></div>
   <div class="chk"><input type="checkbox" id="rs_do_extract" checked><label for="rs_do_extract"><?= t('แตกไฟล์เว็บทับโฟลเดอร์นี้ (configuration.php เดิมจะถูกสำรองเป็น .bak-restore)') ?></label></div>
   <button id="rs_btn" onclick="rsStart(true)"><?= t('ดึงและแตกแพ็กเกจ') ?></button>
   <button class="sec" id="rs_resume" onclick="rsStart(false)"><?= t('ทำต่อจากจุดเดิม') ?></button>
@@ -1359,23 +1479,24 @@ $hasHt = file_exists(ROOT . '/.htaccess');
   <div class="bar"><i id="rs_bar"></i></div>
   <div class="stat" id="rs_prog"><?= t('ยังไม่เริ่ม') ?></div>
   <pre id="rs_log" style="display:none"></pre>
-  <div style="margin-top:22px;padding-top:18px;border-top:1px solid var(--line)">
-    <div style="font-size:20px;font-weight:500"><?= t('แทนที่โดเมน / path เดิมในฐานข้อมูล') ?></div>
-    <div class="stat"><?= t('ทำหลังนำเข้าฐานข้อมูลแล้ว รองรับค่าที่เป็น JSON และ serialized (params ของ Joomla, YOOtheme, Gantry) ไม่ทำให้ข้อมูลพัง') ?></div>
-    <div class="row">
-      <div><label><?= t('โดเมนเดิม') ?></label><input type="text" id="rp_from1" placeholder="old-domain.com"></div>
-      <div><label><?= t('โดเมนใหม่') ?></label><input type="text" id="rp_to1" value="<?= h($_SERVER['HTTP_HOST']) ?>"></div>
-      <div><label><?= t('path เดิมของเว็บ') ?></label><input type="text" id="rp_from2" class="mono" placeholder="/home/olduser/domains/old-domain.com/public_html"></div>
-      <div><label><?= t('path ใหม่') ?></label><input type="text" id="rp_to2" class="mono" value="<?= h(ROOT) ?>"></div>
-    </div>
-    <div class="chk"><input type="checkbox" id="rp_dry"><label for="rp_dry"><?= t('ทดสอบก่อน (นับแถวที่จะเปลี่ยน ไม่แก้จริง)') ?></label></div>
-    <button onclick="rpStart()" id="rp_btn"><?= t('แทนที่ในฐานข้อมูล') ?></button>
-    <div class="stat" id="rp_prog"></div>
-    <pre id="rp_log" style="display:none"></pre>
-  </div>
 </div>
 
-<div class="card">
+<div class="card step" id="card-replace">
+  <h2 data-n="3.1"><?= t('แทนที่โดเมน / path เดิมในฐานข้อมูล') ?></h2>
+  <div class="stat"><?= t('ทำหลังนำเข้าฐานข้อมูลแล้ว ถ้าเปลี่ยนโดเมนหรือ path ของเว็บ รองรับค่าที่เป็น JSON และ serialized (params ของ Joomla, YOOtheme, Gantry) ไม่ทำให้ข้อมูลพัง ถ้าโดเมนและ path เหมือนเดิมให้ข้ามขั้นนี้') ?></div>
+  <div class="row">
+    <div><label><?= t('โดเมนเดิม') ?></label><input type="text" id="rp_from1" placeholder="old-domain.com"></div>
+    <div><label><?= t('โดเมนใหม่') ?></label><input type="text" id="rp_to1" value="<?= h($_SERVER['HTTP_HOST']) ?>"></div>
+    <div><label><?= t('path เดิมของเว็บ') ?></label><input type="text" id="rp_from2" class="mono" placeholder="/home/olduser/domains/old-domain.com/public_html"></div>
+    <div><label><?= t('path ใหม่') ?></label><input type="text" id="rp_to2" class="mono" value="<?= h(ROOT) ?>"></div>
+  </div>
+  <div class="chk"><input type="checkbox" id="rp_dry"><label for="rp_dry"><?= t('ทดสอบก่อน (นับแถวที่จะเปลี่ยน ไม่แก้จริง)') ?></label></div>
+  <button onclick="rpStart()" id="rp_btn"><?= t('แทนที่ในฐานข้อมูล') ?></button>
+  <div class="stat" id="rp_prog"></div>
+  <pre id="rp_log" style="display:none"></pre>
+</div>
+
+<div class="card step" id="card-import">
   <h2 data-n="4"><?= t('นำเข้าฐานข้อมูล (แบ่งรอบ ป้องกัน timeout)') ?></h2>
   <?php if (!$files): ?>
     <div class="warn"><?= t('ไม่พบไฟล์ .sql หรือ .sql.gz ในโฟลเดอร์นี้ ให้อัปโหลดไฟล์ dump มาวางไว้ที่เดียวกับ jmigrate.php แล้วรีเฟรช') ?></div>
@@ -1409,7 +1530,7 @@ $hasHt = file_exists(ROOT . '/.htaccess');
   <pre id="log" style="display:none"></pre>
 </div>
 
-<div class="card">
+<div class="card step" id="card-tools">
   <h2 data-n="5"><?= t('เครื่องมือเสริม') ?></h2>
   <button class="sec" onclick="tool('dirs')"><?= t('สร้างโฟลเดอร์ tmp / logs / cache') ?></button>
   <button class="sec" onclick="tool('htaccess')"><?= t('สร้าง .htaccess จาก htaccess.txt') ?></button>
@@ -1419,7 +1540,7 @@ $hasHt = file_exists(ROOT . '/.htaccess');
   <pre id="toolres" style="display:none"></pre>
 </div>
 
-<div class="card">
+<div class="card step" id="card-done">
   <h2 data-n="6"><?= t('เสร็จแล้ว') ?></h2>
   <p class="stat"><?= t('เมื่อเว็บใช้งานได้แล้ว ให้ลบเครื่องมือนี้ออกทันที (รวมไฟล์ state และไฟล์สำรอง configuration.php) และอย่าลืมลบไฟล์ .sql ที่อัปโหลดมาด้วย') ?></p>
   <button class="danger" onclick="if(confirm(t('ลบ jmigrate.php ออกจาก server?')))tool('selfdestruct')"><?= t('ลบไฟล์เครื่องมือนี้') ?></button>
@@ -1504,7 +1625,21 @@ function presetDebug() { $('t_debug').checked = true; $('t_error_reporting').val
 function presetLive() { $('t_debug').checked = false; $('t_error_reporting').value = 'default'; $('t_offline').checked = false; saveToggles(); }
 
 // ---- restore from package
-let rsRunning = false;
+let rsRunning = false, rsSrc = null;
+function rsSource(k) {
+  rsSrc = k; $('src_local').classList.toggle('on', k === 'local'); $('src_remote').classList.toggle('on', k === 'remote');
+  $('src_remote_box').style.display = k === 'remote' ? '' : 'none';
+  const sel = $('rs_pkg'); const opts = [...sel.options];
+  const want = opts.find(o => o.value.startsWith(k + ':')); if (want) sel.value = want.value;
+  rsSyncLabel();
+}
+function rsSyncLabel() {
+  const v = $('rs_pkg').value; const local = v.startsWith('local:');
+  $('rs_btn').textContent = local ? t('แตกแพ็กเกจ') : t('ดึงและแตกแพ็กเกจ');
+  $('rs_localnote').style.display = local ? '' : 'none';
+}
+$('rs_pkg').addEventListener('change', rsSyncLabel);
+rsSource(<?= $rsLocal ? "'local'" : "'remote'" ?>);
 function rsUi(on) { rsRunning = on; $('rs_btn').disabled = on; $('rs_resume').disabled = on; $('rs_stop').disabled = !on; }
 function rsStop() { rsRunning = false; }
 function rsLog(s) { const l = $('rs_log'); l.style.display = 'block'; l.textContent += s + '\n'; l.scrollTop = l.scrollHeight; }
@@ -1536,7 +1671,7 @@ async function rsStart(reset) {
       if (s.warnings.length) rsLog(t('คำเตือน') + ':\n' + s.warnings.join('\n'));
     }
   });
-  if (ok) { $('rs_bar').style.width = '100%'; $('rs_prog').innerHTML = '<span class=ok>✔ ' + t('เสร็จแล้ว') + '</span> — ' + t('ต่อไป: ข้อ 4 นำเข้าฐานข้อมูล (เลือกไฟล์ db.sql.gz ให้แล้ว) → ข้อ 2 บันทึก configuration.php → แทนที่โดเมน/path ด้านล่าง'); }
+  if (ok) { $('rs_bar').style.width = '100%'; $('rs_prog').innerHTML = '<span class=ok>✔ ' + t('เสร็จแล้ว') + '</span> — ' + t('ต่อไป: กด "ถัดไป" เพื่อนำเข้าฐานข้อมูล (เลือกไฟล์ db.sql.gz ให้แล้ว)'); }
   rsUi(false);
 }
 async function rsLoop(action, data, render) {
@@ -1565,6 +1700,39 @@ async function rpStart() {
   }
   $('rp_btn').disabled = false;
 }
+
+// ---- guided flows
+const FLOWS = {
+  package: ['card-restore', 'card-import', 'card-db', 'card-replace', 'card-health', 'card-toggles', 'card-tools', 'card-done'],
+  manual:  ['card-env', 'card-db', 'card-import', 'card-replace', 'card-health', 'card-toggles', 'card-tools', 'card-done']
+};
+const SITUATION = <?= json_encode($situation) ?>, FLOW_DEFAULT = <?= json_encode($flowDefault) ?>;
+let curFlow = null, curStep = 0;
+function stepTitle(id) { const h = document.querySelector('#' + id + ' h2'); return h ? h.textContent.trim() : id; }
+function setFlow(f, step) {
+  curFlow = f; try { localStorage.setItem('jm_flow', f); } catch (e) {}
+  document.querySelectorAll('.flow[data-flow]').forEach(b => b.classList.toggle('on', b.dataset.flow === f));
+  const order = FLOWS[f]; const wrap = document.querySelector('.wrap');
+  order.forEach((id, i) => { const c = $(id); if (!c) return; c.classList.remove('hidden'); wrap.appendChild(c); c.querySelector('h2').setAttribute('data-n', String(i + 1)); });
+  document.querySelectorAll('.card.step').forEach(c => { if (!order.includes(c.id)) c.classList.add('hidden'); });
+  if (step === undefined) { let s = 0; try { s = parseInt(localStorage.getItem('jm_step_' + f) || '0'); } catch (e) {} step = isNaN(s) ? 0 : s; }
+  gotoStep(Math.min(step, order.length - 1), false);
+}
+function gotoStep(i, scroll) {
+  curStep = i; try { localStorage.setItem('jm_step_' + curFlow, String(i)); } catch (e) {}
+  const order = FLOWS[curFlow];
+  document.querySelectorAll('.nextbar').forEach(n => n.remove());
+  order.forEach((id, k) => { const c = $(id); if (!c) return; c.classList.toggle('collapsed', k !== i);
+    if (k === i) { const bar = document.createElement('div'); bar.className = 'nextbar';
+      if (k > 0) bar.innerHTML += '<button type="button" class="sec" style="margin:0" onclick="gotoStep(' + (k - 1) + ', true)">← ' + t('ย้อนกลับ') + '</button>';
+      if (k < order.length - 1) bar.innerHTML += '<button type="button" style="margin:0" onclick="gotoStep(' + (k + 1) + ', true)">' + t('ถัดไป') + ': ' + esc(stepTitle(order[k + 1])) + ' →</button>';
+      c.appendChild(bar); } });
+  const st = $('stepper'); st.innerHTML = order.map((id, k) => '<li class="' + (k === i ? 'cur' : k < i ? 'done' : '') + '" onclick="gotoStep(' + k + ', true)"><i>' + (k < i ? '✔' : k + 1) + '</i>' + esc(stepTitle(id)) + '</li>').join('');
+  if (scroll) { const c = $(order[i]); if (c) c.scrollIntoView({behavior: 'smooth', block: 'start'}); }
+}
+function openCard(id) { const k = FLOWS[curFlow].indexOf(id); if (k >= 0) gotoStep(k, true); else { setFlow(curFlow === 'package' ? 'manual' : 'package', FLOWS[curFlow === 'package' ? 'manual' : 'package'].indexOf(id)); } }
+document.querySelectorAll('.card.step h2').forEach(h => h.addEventListener('click', () => { const k = FLOWS[curFlow].indexOf(h.parentElement.id); if (k >= 0) gotoStep(k, false); }));
+(function () { let f = null; try { f = localStorage.getItem('jm_flow'); } catch (e) {} setFlow(f && FLOWS[f] ? f : FLOW_DEFAULT); })();
 
 let running = false;
 function setUi(on) { running = on; $('btnStart').disabled = on; $('btnStop').disabled = !on; const rb = $('btnResume'); if (rb) rb.disabled = on; }

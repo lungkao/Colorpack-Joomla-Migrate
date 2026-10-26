@@ -1,4 +1,4 @@
-# Colorpack Joomla Migrate V1.1.1
+# Colorpack Joomla Migrate V1.2.0
 
 **[EN]** Single-file PHP tool for moving a Joomla 3 / 4 / 5 site to a new server.
 Fixes `configuration.php` paths, tests the database, imports huge `.sql` / `.sql.gz` dumps in
@@ -15,7 +15,7 @@ upload → open → migrate → delete.
 - [`jmigrate.php`](jmigrate.php) — on the **new** server: restore package, import DB, fix config / วางบน server **ใหม่**: กู้แพ็กเกจ นำเข้า DB แก้ config
 - [`jbackup.php`](jbackup.php) — on the **old** server: build the migration package (files + DB) / วางบน server **เดิม**: สร้างแพ็กเกจย้ายเว็บ (ไฟล์ + DB)
 
-(V1.1.1 · requires PHP 7.0+ with `mysqli` and `zlib` / ต้องใช้ PHP 7.0+ พร้อม `mysqli` และ `zlib`)
+(V1.2.0 · requires PHP 7.0+ with `mysqli` and `zlib` / ต้องใช้ PHP 7.0+ พร้อม `mysqli` และ `zlib`)
 
 **Interface / หน้าจอ:** ไทย / English — switch in the top bar / สลับได้ที่แถบด้านบน
 
@@ -34,7 +34,7 @@ upload → open → migrate → delete.
 2. Upload `jmigrate.php` **and your database dump** (`.sql`, `.sql.gz` or a DirectAdmin `.gz` backup)
    into the site root — the same folder as `configuration.php`.
 3. Open `https://yoursite.com/jmigrate.php` and enter the key on the login screen (`?key=…` in the URL still works).
-4. Work down the page: **1** environment → **2** database & config → **3** import → **4** tools → **5** delete the tool.
+4. The start card tells you what state the site is in and what to do next. Pick a flow — **A** migrate the whole site from a jbackup package, or **B** files already uploaded, import the database + fix config — and follow the numbered steps with **Next**.
 
 > **Delete the tool from the server when you are done** (there is a button for it). It can rewrite
 > `configuration.php` and your database.
@@ -44,7 +44,7 @@ upload → open → migrate → delete.
 1. แก้ `MIGRATE_KEY` ในไฟล์เป็นรหัสของคุณเอง
 2. อัปโหลด `jmigrate.php` และไฟล์ dump ฐานข้อมูล ไปไว้ที่ root ของเว็บ (ที่เดียวกับ `configuration.php`)
 3. เปิด `https://โดเมน/jmigrate.php` แล้วกรอกรหัสในหน้า login (จะเปิดด้วย `?key=รหัส` ต่อท้าย URL ก็ยังได้)
-4. ทำตามลำดับ **1** สภาพแวดล้อม → **2** ฐานข้อมูลและ config → **3** นำเข้า → **4** เครื่องมือเสริม → **5** ลบเครื่องมือ
+4. การ์ดเริ่มต้นจะบอกว่าตอนนี้เว็บอยู่ในสถานะไหนและควรทำอะไรต่อ เลือกแบบ **A** ย้ายทั้งเว็บจากแพ็กเกจ jbackup หรือ **B** อัปโหลดไฟล์เองแล้ว นำเข้าฐานข้อมูล + แก้ config แล้วทำตามขั้นที่เรียงให้ด้วยปุ่ม **ถัดไป**
 
 > ทำเสร็จแล้ว **ลบไฟล์ออกจาก server ทันที** (มีปุ่มให้) เพราะเครื่องมือนี้แก้ `configuration.php` และฐานข้อมูลได้
 
@@ -52,19 +52,19 @@ upload → open → migrate → delete.
 
 **[EN]** Use the same `MIGRATE_KEY` in both files.
 1. **Old server:** upload `jbackup.php` to the site root, open `jbackup.php`, sign in with the key, press **Build package**. It dumps the database table by table and zips the site files in resumable rounds into `jbackup-<name>/` (db.sql.gz, site-partN.zip, manifest.json with checksums).
-2. **New server:** upload `jmigrate.php` to the empty site root, open it, go to **3 Restore from package**, paste the old server's `jbackup.php` URL, press **List packages**, pick one, press **Pull and extract**. Files are pulled over HTTPS in 8 MB ranges, verified by checksum and extracted in rounds. (Or upload the `jbackup-*` folder yourself and pick it from the list.)
-3. **4 Import database** — `db.sql.gz` from the package is pre-selected, the table prefix is filled from the manifest.
-4. **2 Database & configuration.php** — enter the new DB credentials and save; paths are auto-detected.
-5. **Replace old domain / path** (bottom of section 3) if the domain or server path changed — serialized- and JSON-safe.
-6. Section 5 tools (`.htaccess`, cache), then delete both tools and the package folders.
+2. **New server:** upload `jmigrate.php` to the empty site root, open it, choose flow **A**. Step 1 *Restore from package*: either **Pull from the old server** (paste the `jbackup.php` URL, list, pick, pull — 8 MB HTTPS ranges, checksum-verified) or **Already on this server** if you uploaded the `jbackup-*` folder yourself (no download, just extract).
+3. Step 2 *Import database* — `db.sql.gz` from the package is pre-selected, the prefix comes from the manifest.
+4. Step 3 *Database & configuration.php* — enter the new DB credentials and save; paths are auto-detected.
+5. Step 4 *Replace old domain / path* if the domain or server path changed — serialized- and JSON-safe (skip if unchanged).
+6. Remaining steps: health check, config switches, tools (`.htaccess`, cache), then delete both tools and the package folders.
 
 **[TH]** ใช้ `MIGRATE_KEY` เดียวกันทั้งสองไฟล์
 1. **server เดิม:** อัปโหลด `jbackup.php` ไว้ที่ root ของเว็บ เปิด `jbackup.php` กรอกรหัส กด **สร้างแพ็กเกจ** ระบบจะ dump ฐานข้อมูลทีละตาราง และ zip ไฟล์เว็บแบบแบ่งรอบ ได้โฟลเดอร์ `jbackup-<ชื่อ>/` (db.sql.gz, site-partN.zip, manifest.json พร้อม checksum)
-2. **server ใหม่:** อัปโหลด `jmigrate.php` ไว้ที่ root ว่าง ๆ เปิด → ข้อ **3 กู้จากแพ็กเกจ** → วาง URL ของ `jbackup.php` บน server เดิม → กด **ดูแพ็กเกจบน server เดิม** → เลือก → กด **ดึงและแตกแพ็กเกจ** ระบบจะดึงไฟล์ผ่าน HTTPS ทีละ 8 MB ตรวจ checksum แล้วแตกไฟล์แบบแบ่งรอบ (หรืออัปโหลดโฟลเดอร์ `jbackup-*` มาวางเองแล้วเลือกจากรายการ)
-3. **ข้อ 4 นำเข้าฐานข้อมูล** — เลือก `db.sql.gz` จากแพ็กเกจให้แล้ว prefix เติมจาก manifest
-4. **ข้อ 2 ฐานข้อมูลและ configuration.php** — กรอก DB ใหม่แล้วบันทึก path ตรวจให้อัตโนมัติ
-5. **แทนที่โดเมน / path เดิม** (ท้ายข้อ 3) ถ้าเปลี่ยนโดเมนหรือ path ปลอดภัยกับค่า serialized และ JSON
-6. เครื่องมือข้อ 5 (`.htaccess`, cache) แล้วลบเครื่องมือทั้งสองและโฟลเดอร์แพ็กเกจทิ้ง
+2. **server ใหม่:** อัปโหลด `jmigrate.php` ไว้ที่ root ว่าง ๆ เปิด → เลือกแบบ **A** ขั้นที่ 1 *กู้จากแพ็กเกจ*: เลือก **ดึงจาก server เดิม** (วาง URL ของ `jbackup.php` → ดูแพ็กเกจ → เลือก → ดึง ทีละ 8 MB ผ่าน HTTPS ตรวจ checksum) หรือ **อยู่บน server นี้แล้ว** ถ้าอัปโหลดโฟลเดอร์ `jbackup-*` มาเอง (ไม่ต้องดาวน์โหลด แค่แตกไฟล์)
+3. ขั้นที่ 2 *นำเข้าฐานข้อมูล* — เลือก `db.sql.gz` จากแพ็กเกจให้แล้ว prefix เติมจาก manifest
+4. ขั้นที่ 3 *ฐานข้อมูลและ configuration.php* — กรอก DB ใหม่แล้วบันทึก path ตรวจให้อัตโนมัติ
+5. ขั้นที่ 4 *แทนที่โดเมน / path เดิม* ถ้าเปลี่ยนโดเมนหรือ path ปลอดภัยกับค่า serialized และ JSON (เหมือนเดิมก็ข้ามได้)
+6. ขั้นที่เหลือ: ตรวจสุขภาพ config, คอนฟิกช่วงย้าย, เครื่องมือ (`.htaccess`, cache) แล้วลบเครื่องมือทั้งสองและโฟลเดอร์แพ็กเกจทิ้ง
 
 ---
 
@@ -193,6 +193,19 @@ SEF, URL Rewriting, System Cache พร้อมปุ่มลัด *โหม
 ---
 
 ## Changelog / บันทึกการแก้ไข
+
+### 1.2.0 — 2026-10-27
+**[EN]** Guided UI.
+- Start card detects the situation (empty folder / files but no configuration.php / DB unreachable / DB empty / config mismatch / ready) and says what to do next, with a status checklist that jumps to the right step
+- Two flows: **A** migrate from a jbackup package (restore → import → config → replace → …) and **B** files already uploaded (environment → config → import → …); steps are renumbered per flow, one step open at a time, **Next / Back** buttons, progress stepper, remembered per browser
+- Restore step asks where the package is: **already on this server** (uploaded `jbackup-*` folder — no download, just extract) or **pull from the old server**
+- Domain / path replace is now its own step
+
+**[TH]** หน้าจอแบบนำทาง
+- การ์ดเริ่มต้นตรวจสถานการณ์ให้ (โฟลเดอร์ว่าง / มีไฟล์แต่ไม่มี configuration.php / ต่อ DB ไม่ได้ / DB ว่าง / config ไม่ตรง / พร้อมแล้ว) และบอกว่าควรทำอะไรต่อ พร้อมรายการเช็คสถานะที่กดกระโดดไปขั้นที่เกี่ยวได้
+- เลือกได้ 2 แบบ: **A** ย้ายจากแพ็กเกจ jbackup (กู้ → นำเข้า → config → แทนที่ → …) และ **B** อัปโหลดไฟล์เองแล้ว (สภาพแวดล้อม → config → นำเข้า → …) เลขขั้นเรียงใหม่ตามแบบที่เลือก เปิดทีละขั้น มีปุ่ม **ถัดไป / ย้อนกลับ** แถบความคืบหน้า และจำขั้นที่ค้างไว้
+- ขั้นกู้จากแพ็กเกจถามก่อนว่าแพ็กเกจอยู่ที่ไหน: **อยู่บน server นี้แล้ว** (อัปโหลดโฟลเดอร์ `jbackup-*` มาเอง ไม่ต้องดาวน์โหลด แค่แตกไฟล์) หรือ **ดึงจาก server เดิม**
+- แทนที่โดเมน / path แยกเป็นขั้นของตัวเอง
 
 ### 1.1.1 — 2026-10-26
 **[EN]** Login screen: the access key is entered in a password field instead of the URL (a signed cookie keeps you signed in for 24 h; `?key=` still works for scripts and for server-to-server pulls). Sign-out link in the header. Wrong key waits 1 s.
