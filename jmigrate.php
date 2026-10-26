@@ -20,7 +20,7 @@
 
 const MIGRATE_KEY   = 'changeme123';   // <<< แก้เป็นรหัสของคุณ
 const STEP_SECONDS  = 8;               // เวลาทำงานต่อรอบ (วินาที) ต่ำกว่า timeout ของ server
-const TOOL_VERSION  = '1.0.0';
+const TOOL_VERSION  = '1.1.0';
 const BMC_URL       = 'https://buymeacoffee.com/cheuachatchai'; // Buy me a coffee
 const GZ_CHUNK      = 512 * 1024 * 1024; // เพดานขนาดที่แตก gz ต่อรอบ (bytes) ปกติจบที่เวลาก่อน
 
@@ -43,6 +43,53 @@ if (isset($_GET['lang'])) @setcookie('jm_lang', $LANG, time() + 86400 * 30, '/')
 $GLOBALS['JM_LANG'] = $LANG;
 function t($s) { return ($GLOBALS['JM_LANG'] === 'en' && isset($GLOBALS['JM_EN'][$s])) ? $GLOBALS['JM_EN'][$s] : $s; }
 $GLOBALS['JM_EN'] = [
+    'กู้จากแพ็กเกจ (jbackup)' => 'Restore from package (jbackup)',
+    'แพ็กเกจคือโฟลเดอร์ jbackup-ชื่อ/ ที่สร้างด้วย jbackup.php บน server เดิม มี db.sql.gz, site-partN.zip และ manifest.json ดึงตรงจาก server เดิมผ่าน HTTPS หรืออัปโหลดโฟลเดอร์มาวางที่ root ของเว็บนี้ก็ได้' => 'A package is a jbackup-<name>/ folder made by jbackup.php on the old server: db.sql.gz, site-partN.zip and manifest.json. Pull it straight from the old server over HTTPS, or upload the folder to this site\'s root.',
+    'URL ของ jbackup.php บน server เดิม (ใช้ MIGRATE_KEY เดียวกัน)' => 'URL of jbackup.php on the old server (same MIGRATE_KEY)',
+    'ดูแพ็กเกจบน server เดิม' => 'List packages on the old server',
+    'แพ็กเกจ' => 'Package',
+    'อยู่บน server นี้แล้ว' => 'already on this server',
+    'ยังไม่มีแพ็กเกจ — ใส่ URL ด้านบนแล้วกด "ดูแพ็กเกจบน server เดิม" หรืออัปโหลดโฟลเดอร์ jbackup-* มาวางแล้วรีเฟรช' => 'No package yet — enter the URL above and press "List packages on the old server", or upload a jbackup-* folder and refresh',
+    'แตกไฟล์เว็บทับโฟลเดอร์นี้ (configuration.php เดิมจะถูกสำรองเป็น .bak-restore)' => 'Extract site files into this folder (the current configuration.php is backed up as .bak-restore)',
+    'ดึงและแตกแพ็กเกจ' => 'Pull and extract package',
+    'แทนที่โดเมน / path เดิมในฐานข้อมูล' => 'Replace old domain / path in the database',
+    'ทำหลังนำเข้าฐานข้อมูลแล้ว รองรับค่าที่เป็น JSON และ serialized (params ของ Joomla, YOOtheme, Gantry) ไม่ทำให้ข้อมูลพัง' => 'Run after importing the database. Handles JSON and serialized values (Joomla, YOOtheme, Gantry params) without corrupting them.',
+    'โดเมนเดิม' => 'Old domain',
+    'โดเมนใหม่' => 'New domain',
+    'path เดิมของเว็บ' => 'Old site path',
+    'path ใหม่' => 'New path',
+    'ทดสอบก่อน (นับแถวที่จะเปลี่ยน ไม่แก้จริง)' => 'Test first (count rows that would change, no writes)',
+    'แทนที่ในฐานข้อมูล' => 'Replace in database',
+    'กำลังติดต่อ server เดิม...' => 'Contacting the old server...',
+    'บน server เดิม' => 'on the old server',
+    'ยังสร้างไม่เสร็จ' => 'not finished yet',
+    'พบ' => 'Found',
+    'server เดิมยังไม่มีแพ็กเกจ' => 'The old server has no packages yet',
+    'กำลังดึงแพ็กเกจ' => 'Pulling package',
+    'ไฟล์' => 'files',
+    'กำลังแตกไฟล์' => 'Extracting',
+    'ส่วน' => 'part',
+    'คำเตือน' => 'Warnings',
+    'เสร็จแล้ว' => 'Finished',
+    'ต่อไป: ข้อ 4 นำเข้าฐานข้อมูล (เลือกไฟล์ db.sql.gz ให้แล้ว) → ข้อ 2 บันทึก configuration.php → แทนที่โดเมน/path ด้านล่าง' => 'Next: step 4 import the database (db.sql.gz is pre-selected) → step 2 save configuration.php → replace domain/path below',
+    'ไม่มีคู่ข้อความที่จะแทนที่' => 'Nothing to replace',
+    'แทนที่ในฐานข้อมูลจริง? ควรสำรองหรือทดสอบก่อน' => 'Replace in the live database? Back up or test first.',
+    'ทดสอบ' => 'Test',
+    'ตาราง' => 'tables',
+    'แถวที่ตรวจ' => 'rows checked',
+    'แถวที่เปลี่ยน' => 'rows changed',
+    'ทดสอบเสร็จ จะเปลี่ยน' => 'Test finished — would change',
+    'แทนที่แล้ว' => 'Replaced',
+    'แถว' => 'rows',
+    'ใส่ URL ของ jbackup.php บน server เดิม' => 'Enter the URL of jbackup.php on the old server',
+    'server เดิมปฏิเสธ (403): MIGRATE_KEY ของ jbackup.php กับ jmigrate.php ต้องตรงกัน' => 'The old server refused (403): MIGRATE_KEY must be the same in jbackup.php and jmigrate.php',
+    'ติดต่อ jbackup.php ไม่ได้ (HTTP ' => 'Cannot reach jbackup.php (HTTP ',
+    'อ่าน manifest จาก server เดิมไม่ได้ (HTTP ' => 'Cannot read the manifest from the old server (HTTP ',
+    'สร้างโฟลเดอร์แพ็กเกจไม่ได้' => 'Cannot create the package folder',
+    'ดาวน์โหลดไม่สำเร็จ: ' => 'Download failed: ',
+    'checksum ไม่ตรง ดาวน์โหลดใหม่: ' => 'Checksum mismatch, downloading again: ',
+    'ไม่พบแพ็กเกจ' => 'Package not found',
+    'ไฟล์ส่วนไม่ครบหรือ checksum ไม่ตรง: ' => 'Part missing or checksum mismatch: ',
     ' (PHP จะ fatal error "Cannot redeclare")' => ' (PHP will fatal with "Cannot redeclare")',
     ' (บรรทัด ' => ' (line ',
     ' (มี error ' => ' (',
@@ -80,7 +127,7 @@ Tables with the same name will be replaced as the dump instructs.',
     '<span class=bad>หยุดเพราะ error — แก้แล้วกด "ทำต่อจากจุดเดิม" หรือติ๊ก "เจอ error แล้วข้ามไป"</span>' => '<span class=bad>Stopped on an error — fix it and press "Resume", or tick "Skip errors and continue"</span>',
     '<span class=bad>ไม่มี (เปิด .gz ไม่ได้)</span>' => '<span class=bad>missing (cannot open .gz)</span>',
     '<span class=bad>ไม่มี</span>' => '<span class=bad>missing</span>',
-    '<span class=bad>ไม่มี</span> (ใช้เครื่องมือข้อ 4 สร้างได้)' => '<span class=bad>missing</span> (create it with the tools in step 4)',
+    '<span class=bad>ไม่มี</span> (ใช้เครื่องมือข้อ 5 สร้างได้)' => '<span class=bad>missing</span> (create it with the tools in step 5)',
     '<span class=ok>มี</span>' => '<span class=ok>present</span>',
     '<span class=ok>✔ เชื่อมต่อได้</span> MySQL ' => '<span class=ok>✔ Connected</span> MySQL ',
     '<span class=ok>✔ ไม่พบความผิดปกติ</span>' => '<span class=ok>✔ No problems found</span>',
@@ -325,11 +372,11 @@ function list_prefixes($link) {
 }
 function sql_files() {
     $files = [];
-    foreach (glob(ROOT . '/*.{sql,sql.gz,gz}', GLOB_BRACE) ?: [] as $f) {
-        if (is_file($f)) $files[basename($f)] = filesize($f);
-    }
+    foreach (glob(ROOT . '/*.{sql,sql.gz,gz}', GLOB_BRACE) ?: [] as $f) { if (is_file($f)) $files[basename($f)] = filesize($f); }
+    foreach (glob(ROOT . '/jbackup-*/db.sql{,.gz}', GLOB_BRACE) ?: [] as $f) { if (is_file($f)) $files[basename(dirname($f)) . '/' . basename($f)] = filesize($f); }
     return $files;
 }
+function safe_rel($f) { $f = str_replace('\\', '/', (string)$f); return preg_match('#^(jbackup-[A-Za-z0-9_.-]+/)?[^/\0]+$#', $f) && strpos($f, '..') === false ? $f : ''; }
 function load_state() { $s = @json_decode(@file_get_contents(STATE_FILE), true); return is_array($s) ? $s : []; }
 function save_state($s) { @file_put_contents(STATE_FILE, json_encode($s, JSON_UNESCAPED_UNICODE)); }
 
@@ -726,6 +773,101 @@ function gz_isize($f) {
     return $iz;
 }
 
+// ---------------------------------------------------------------- restore from package (jbackup)
+function rs_state_file() { return ROOT . '/jmigrate-restore.json'; }
+function rs_load() { $s = @json_decode(@file_get_contents(rs_state_file()), true); return is_array($s) ? $s : []; }
+function rs_save($s) { @file_put_contents(rs_state_file(), json_encode($s, JSON_UNESCAPED_UNICODE)); }
+function rs_local_packages() {
+    $out = [];
+    foreach (glob(ROOT . '/jbackup-*', GLOB_ONLYDIR) ?: [] as $d) {
+        $m = @json_decode(@file_get_contents("$d/manifest.json"), true);
+        $out[] = ['dir' => basename($d), 'name' => substr(basename($d), 8), 'manifest' => is_array($m) ? $m : null, 'files' => array_map('basename', array_filter(glob("$d/*") ?: [], 'is_file'))];
+    }
+    return $out;
+}
+/** HTTP helper: GET with optional Range; returns [status, body, headers] */
+function rs_http($url, $from = null, $len = null, $post = null, $timeout = 25) {
+    $headers = []; if ($from !== null) $headers[] = 'Range: bytes=' . $from . '-' . ($len ? $from + $len - 1 : '');
+    if (function_exists('curl_init')) {
+        $ch = curl_init($url); $hdr = '';
+        curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER => true, CURLOPT_FOLLOWLOCATION => true, CURLOPT_MAXREDIRS => 3, CURLOPT_TIMEOUT => $timeout, CURLOPT_CONNECTTIMEOUT => 10, CURLOPT_HTTPHEADER => $headers, CURLOPT_USERAGENT => 'jmigrate/' . TOOL_VERSION,
+            CURLOPT_HEADERFUNCTION => function ($c, $h) use (&$hdr) { $hdr .= $h; return strlen($h); }]);
+        if ($post !== null) { curl_setopt($ch, CURLOPT_POST, true); curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($post)); curl_setopt($ch, CURLOPT_HTTPHEADER, array_merge($headers, ['Content-Type: application/json'])); }
+        $body = curl_exec($ch); $code = curl_getinfo($ch, CURLINFO_HTTP_CODE); $err = curl_error($ch); curl_close($ch);
+        if ($body === false) return [0, '', $err];
+        return [$code, $body, $hdr];
+    }
+    $opts = ['http' => ['method' => $post !== null ? 'POST' : 'GET', 'header' => implode("\r\n", array_merge($headers, $post !== null ? ['Content-Type: application/json'] : [])), 'timeout' => $timeout, 'ignore_errors' => true, 'user_agent' => 'jmigrate/' . TOOL_VERSION]];
+    if ($post !== null) $opts['http']['content'] = json_encode($post);
+    $body = @file_get_contents($url, false, stream_context_create($opts));
+    $code = 0; if (isset($http_response_header[0]) && preg_match('/\s(\d{3})\s/', $http_response_header[0], $m)) $code = (int)$m[1];
+    return [$code, $body === false ? '' : $body, isset($http_response_header) ? implode("\n", $http_response_header) : ''];
+}
+function rs_source_base($url) { // normalise to .../jbackup.php
+    $url = trim($url); if ($url === '') return '';
+    if (!preg_match('#^https?://#i', $url)) $url = 'https://' . $url;
+    if (!preg_match('#jbackup\.php#i', $url)) $url = rtrim(preg_replace('#\?.*$#', '', $url), '/') . '/jbackup.php';
+    return preg_replace('#\?.*$#', '', $url);
+}
+/** อ่าน central directory ของ zip (ไม่ต้องพึ่ง ext/zip) → เขียนรายการ entries ลงไฟล์ list */
+function rs_zip_index($zip, $listFile) {
+    $fh = fopen($zip, 'rb'); if (!$fh) return 'open';
+    $size = filesize($zip); $tail = min($size, 65536 + 22); fseek($fh, $size - $tail); $buf = fread($fh, $tail);
+    $p = strrpos($buf, "PK\x05\x06"); if ($p === false) { fclose($fh); return 'eocd'; }
+    $e = unpack('vdisk/vcddisk/ventries/vtotal/Vcdsize/Vcdoff', substr($buf, $p + 4, 18));
+    fseek($fh, $e['cdoff']); $cd = fread($fh, $e['cdsize']); fclose($fh);
+    $out = fopen($listFile, 'wb'); $pos = 0; $n = 0;
+    while ($pos + 46 <= strlen($cd) && substr($cd, $pos, 4) === "PK\x01\x02") {
+        $h = unpack('vver/vvneed/vflag/vmethod/vtime/vdate/Vcrc/Vcsize/Vusize/vnlen/velen/vclen/vdisk/viattr/Veattr/Voff', substr($cd, $pos + 4, 42));
+        $name = substr($cd, $pos + 46, $h['nlen']);
+        $pos += 46 + $h['nlen'] + $h['elen'] + $h['clen'];
+        if ($name === '' || strpos($name, '..') !== false || $name[0] === '/' || strpos($name, "\\") !== false || strpos($name, "\0") !== false) continue;
+        fwrite($out, implode("\t", [$h['off'], $h['method'], $h['csize'], $h['usize'], $h['crc'], $name]) . "\n"); $n++;
+    }
+    fclose($out); return $n;
+}
+function rs_extract_entry($fh, $off, $method, $csize, $usize, $crc, $name, &$warn) {
+    $dest = ROOT . '/' . $name;
+    if (substr($name, -1) === '/') { if (!is_dir($dest)) @mkdir($dest, 0755, true); return true; }
+    $dir = dirname($dest); if (!is_dir($dir)) @mkdir($dir, 0755, true);
+    if (basename($name) === 'jmigrate.php' || basename($name) === 'jbackup.php') return true; // อย่าทับตัวเอง
+    if ($name === 'configuration.php' && is_file($dest) && !is_file($dest . '.bak-restore')) @copy($dest, $dest . '.bak-restore');
+    fseek($fh, $off); $lh = fread($fh, 30); if (strlen($lh) < 30 || substr($lh, 0, 4) !== "PK\x03\x04") { $warn[] = "bad local header: $name"; return false; }
+    $l = unpack('vnlen/velen', substr($lh, 26, 4)); fseek($fh, $off + 30 + $l['nlen'] + $l['elen']);
+    $out = @fopen($dest, 'wb'); if (!$out) { $warn[] = "cannot write: $name"; return false; }
+    $hc = hash_init('crc32b'); $left = $csize;
+    if ($method === 8) {
+        $ctx = inflate_init(ZLIB_ENCODING_RAW);
+        while ($left > 0) { $chunk = fread($fh, min(1048576, $left)); if ($chunk === '' || $chunk === false) break; $left -= strlen($chunk); $d = inflate_add($ctx, $chunk, ZLIB_NO_FLUSH); if ($d !== '') { fwrite($out, $d); hash_update($hc, $d); } }
+        $d = inflate_add($ctx, '', ZLIB_FINISH); if ($d !== '') { fwrite($out, $d); hash_update($hc, $d); }
+    } elseif ($method === 0) {
+        while ($left > 0) { $chunk = fread($fh, min(4194304, $left)); if ($chunk === '' || $chunk === false) break; $left -= strlen($chunk); fwrite($out, $chunk); hash_update($hc, $chunk); }
+    } else { fclose($out); $warn[] = "unsupported method $method: $name"; return false; }
+    fclose($out);
+    if ($usize > 0 && hexdec(hash_final($hc)) !== $crc) { $warn[] = "crc mismatch: $name"; return false; }
+    return true;
+}
+/** serialized-safe replace สำหรับค่าในฐานข้อมูล */
+function rs_replace_value($v, $pairs) {
+    if ($v === null || $v === '') return $v;
+    $hit = false; foreach ($pairs as $p) { if ($p[0] !== '' && strpos($v, $p[0]) !== false) { $hit = true; break; } }
+    if (!$hit) return $v;
+    if (preg_match('/^[aOs]:\d+[:{]/', $v)) { // serialized PHP
+        $u = @unserialize($v, ['allowed_classes' => false]);
+        if ($u !== false || $v === 'b:0;') { $u = rs_replace_deep($u, $pairs); return serialize($u); }
+    }
+    if (($v[0] === '{' || $v[0] === '[') && ($j = json_decode($v, true)) !== null) { // JSON (Joomla params)
+        return json_encode(rs_replace_deep($j, $pairs), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    }
+    foreach ($pairs as $p) if ($p[0] !== '') $v = str_replace($p[0], $p[1], $v);
+    return $v;
+}
+function rs_replace_deep($x, $pairs) {
+    if (is_string($x)) return rs_replace_value($x, $pairs);
+    if (is_array($x)) { $o = []; foreach ($x as $k => $v) $o[is_string($k) ? rs_replace_value($k, $pairs) : $k] = rs_replace_deep($v, $pairs); return $o; }
+    return $x;
+}
+
 // ---------------------------------------------------------------- AJAX actions
 $action = isset($_REQUEST['action']) ? $_REQUEST['action'] : '';
 if ($action !== '') {
@@ -781,10 +923,124 @@ if ($action !== '') {
         json_out(['ok' => $ok, 'msg' => $msg, 'issues' => $issues]);
     }
 
+    // ---- restore from package
+    if ($action === 'rs_remote_list') {
+        $base = rs_source_base($in['source']); if ($base === '') json_out(['ok' => false, 'msg' => t('ใส่ URL ของ jbackup.php บน server เดิม')]);
+        list($code, $body) = rs_http($base . '?key=' . urlencode(MIGRATE_KEY) . '&action=list', null, null, []);
+        $j = json_decode($body, true);
+        if ($code === 403) json_out(['ok' => false, 'msg' => t('server เดิมปฏิเสธ (403): MIGRATE_KEY ของ jbackup.php กับ jmigrate.php ต้องตรงกัน')]);
+        if (!$j || empty($j['ok'])) json_out(['ok' => false, 'msg' => t('ติดต่อ jbackup.php ไม่ได้ (HTTP ') . $code . '): ' . substr(strip_tags((string)$body), 0, 120)]);
+        json_out(['ok' => true, 'base' => $base, 'packages' => $j['packages']]);
+    }
+    if ($action === 'rs_pull') {
+        $t0 = microtime(true); $st = rs_load();
+        $base = rs_source_base($in['source']); $pkg = 'jbackup-' . preg_replace('/[^A-Za-z0-9_.-]/', '', (string)$in['name']);
+        if (!empty($in['reset']) || empty($st['pull']) || $st['pull']['pkg'] !== $pkg || $st['pull']['base'] !== $base) {
+            list($code, $body) = rs_http($base . '?key=' . urlencode(MIGRATE_KEY) . '&action=manifest&pkg=' . urlencode($pkg));
+            $man = json_decode($body, true);
+            if ($code !== 200 || !$man || empty($man['checksums'])) json_out(['ok' => false, 'msg' => t('อ่าน manifest จาก server เดิมไม่ได้ (HTTP ') . $code . ')']);
+            $dir = ROOT . '/' . $pkg; if (!is_dir($dir) && !@mkdir($dir, 0755)) json_out(['ok' => false, 'msg' => t('สร้างโฟลเดอร์แพ็กเกจไม่ได้')]);
+            @file_put_contents("$dir/.htaccess", "Require all denied\nDeny from all\n"); file_put_contents("$dir/manifest.json", $body);
+            $files = []; foreach ($man['checksums'] as $f => $c) $files[] = ['f' => $f, 'size' => (int)$c['size'], 'md5' => $c['md5'], 'got' => is_file("$dir/$f") ? filesize("$dir/$f") : 0, 'ok' => false];
+            $st['pull'] = ['pkg' => $pkg, 'base' => $base, 'files' => $files, 'i' => 0, 'done' => false, 'total' => array_sum(array_column($files, 'size')), 'bytes' => 0, 'errors' => []];
+            foreach ($files as $f) $st['pull']['bytes'] += min($f['got'], $f['size']);
+        }
+        $p = &$st['pull']; $dir = ROOT . '/' . $pkg; $chunk = 8 * 1048576;
+        while ($p['i'] < count($p['files'])) {
+            $f = &$p['files'][$p['i']];
+            if ($f['ok']) { $p['i']++; continue; }
+            if ($f['got'] > $f['size']) { @unlink("$dir/{$f['f']}"); $p['bytes'] -= $f['got']; $f['got'] = 0; }
+            while ($f['got'] < $f['size']) {
+                if (microtime(true) - $t0 > STEP_SECONDS) { rs_save($st); json_out(['ok' => true, 'state' => $st['pull'], 'elapsed' => round(microtime(true) - $t0, 1)]); }
+                $want = min($chunk, $f['size'] - $f['got']);
+                list($code, $body) = rs_http($base . '?key=' . urlencode(MIGRATE_KEY) . '&action=download&pkg=' . urlencode($pkg) . '&f=' . urlencode($f['f']), $f['got'], $want, null, 60);
+                if ($code !== 206 && !($code === 200 && $f['got'] === 0)) { $p['errors'][] = "{$f['f']}: HTTP $code"; rs_save($st); json_out(['ok' => false, 'msg' => t('ดาวน์โหลดไม่สำเร็จ: ') . "{$f['f']} (HTTP $code)", 'state' => $st['pull']]); }
+                if ($code === 200) $body = substr($body, 0, $f['size']);
+                $fp = fopen("$dir/{$f['f']}", 'c+b'); fseek($fp, $f['got']); fwrite($fp, $body); fclose($fp);
+                $f['got'] += strlen($body); $p['bytes'] += strlen($body);
+                if (strlen($body) === 0) { $p['errors'][] = "{$f['f']}: empty response"; rs_save($st); json_out(['ok' => false, 'msg' => t('ดาวน์โหลดไม่สำเร็จ: ') . $f['f'], 'state' => $st['pull']]); }
+            }
+            $f['ok'] = md5_file("$dir/{$f['f']}") === $f['md5'];
+            if (!$f['ok']) { $p['errors'][] = "{$f['f']}: checksum mismatch"; @unlink("$dir/{$f['f']}"); $p['bytes'] -= $f['got']; $f['got'] = 0; rs_save($st); json_out(['ok' => false, 'msg' => t('checksum ไม่ตรง ดาวน์โหลดใหม่: ') . $f['f'], 'state' => $st['pull']]); }
+            $p['i']++;
+        }
+        $p['done'] = true; rs_save($st); json_out(['ok' => true, 'state' => $st['pull'], 'elapsed' => round(microtime(true) - $t0, 1)]);
+    }
+    if ($action === 'rs_extract') {
+        $t0 = microtime(true); $st = rs_load();
+        $pkg = basename((string)$in['pkg']); $dir = ROOT . '/' . $pkg; if (strpos($pkg, 'jbackup-') !== 0 || !is_dir($dir)) json_out(['ok' => false, 'msg' => t('ไม่พบแพ็กเกจ')]);
+        $man = @json_decode(@file_get_contents("$dir/manifest.json"), true);
+        $parts = $man && !empty($man['files']['parts']) ? $man['files']['parts'] : array_map('basename', glob("$dir/site-part*.zip") ?: []);
+        if (!empty($in['reset']) || empty($st['extract']) || $st['extract']['pkg'] !== $pkg) {
+            foreach ($parts as $pf) { $c = $man['checksums'][$pf] ?? null; if ($c && (!is_file("$dir/$pf") || md5_file("$dir/$pf") !== $c['md5'])) json_out(['ok' => false, 'msg' => t('ไฟล์ส่วนไม่ครบหรือ checksum ไม่ตรง: ') . $pf]); }
+            $st['extract'] = ['pkg' => $pkg, 'parts' => $parts, 'pi' => 0, 'pos' => 0, 'entries' => 0, 'files' => 0, 'bytes' => 0, 'done' => false, 'warnings' => [], 'total' => $man['files']['count'] ?? 0];
+        }
+        $e = &$st['extract'];
+        while ($e['pi'] < count($e['parts'])) {
+            $zip = "$dir/{$e['parts'][$e['pi']]}"; $list = "$zip.list";
+            if (!is_file($list)) { $n = rs_zip_index($zip, $list); if (!is_int($n)) { $e['warnings'][] = "cannot read $zip ($n)"; $e['pi']++; $e['pos'] = 0; continue; } }
+            $lf = fopen($list, 'rb'); fseek($lf, $e['pos']); $zh = fopen($zip, 'rb');
+            while (($line = fgets($lf)) !== false) {
+                list($off, $method, $csize, $usize, $crc, $name) = explode("\t", rtrim($line, "\n"), 6);
+                if (rs_extract_entry($zh, (int)$off, (int)$method, (int)$csize, (int)$usize, (int)$crc, $name, $e['warnings'])) { if (substr($name, -1) !== '/') { $e['files']++; $e['bytes'] += (int)$usize; } }
+                $e['entries']++; $e['pos'] = ftell($lf);
+                if (microtime(true) - $t0 > STEP_SECONDS) { fclose($lf); fclose($zh); rs_save($st); json_out(['ok' => true, 'state' => $e, 'elapsed' => round(microtime(true) - $t0, 1)]); }
+            }
+            fclose($lf); fclose($zh); @unlink($list); $e['pi']++; $e['pos'] = 0;
+        }
+        $e['done'] = true; if (count($e['warnings']) > 200) $e['warnings'] = array_slice($e['warnings'], -200);
+        // เติมค่าจาก manifest ให้ส่วนฐานข้อมูล
+        $e['suggest'] = ['prefix' => $man['site']['dbprefix'] ?? '', 'db_file' => ($man && !empty($man['database']['file']) && is_file("$dir/{$man['database']['file']}")) ? "$pkg/{$man['database']['file']}" : '', 'old_host' => $man['site']['host'] ?? '', 'old_root' => $man['site']['root'] ?? ''];
+        rs_save($st); json_out(['ok' => true, 'state' => $e, 'elapsed' => round(microtime(true) - $t0, 1)]);
+    }
+    if ($action === 'rs_replace') {
+        $t0 = microtime(true); $st = rs_load(); $err = '';
+        $link = db_connect($in['host'], $in['user'], $in['pass'], $in['db'], $err); if (!$link) json_out(['ok' => false, 'msg' => t('เชื่อมต่อฐานข้อมูลไม่ได้: ') . $err]);
+        $pairs = []; foreach ((array)$in['pairs'] as $p) { if (isset($p[0], $p[1]) && $p[0] !== '' && $p[0] !== $p[1]) $pairs[] = [(string)$p[0], (string)$p[1]]; }
+        if (!$pairs) json_out(['ok' => false, 'msg' => t('ไม่มีคู่ข้อความที่จะแทนที่')]);
+        $prefix = (string)$in['prefix'];
+        if (!empty($in['reset']) || empty($st['replace']) || $st['replace']['pairs'] !== $pairs) {
+            $r = mysqli_query($link, "SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_TYPE = 'BASE TABLE' AND TABLE_NAME LIKE '" . mysqli_real_escape_string($link, str_replace('_', '\\_', $prefix)) . "%'");
+            $tables = []; while ($r && ($x = mysqli_fetch_row($r))) $tables[] = $x[0];
+            $st['replace'] = ['pairs' => $pairs, 'tables' => $tables, 'ti' => 0, 'last' => null, 'offset' => 0, 'rows' => 0, 'changed' => 0, 'done' => false, 'log' => []];
+        }
+        $rp = &$st['replace']; $dry = !empty($in['dryrun']);
+        $selfRef = false; foreach ($pairs as $p) if (strpos($p[1], $p[0]) !== false) $selfRef = true; // ค่าใหม่มีค่าเก่าอยู่ข้างใน → แถวยังตรง LIKE หลังแก้
+        while ($rp['ti'] < count($rp['tables'])) {
+            $t = $rp['tables'][$rp['ti']]; $tq = '`' . str_replace('`', '``', $t) . '`';
+            $r = mysqli_query($link, "SELECT COLUMN_NAME, DATA_TYPE, COLUMN_KEY FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = '" . mysqli_real_escape_string($link, $t) . "' ORDER BY ORDINAL_POSITION");
+            $cols = []; $pk = []; $all = [];
+            while ($r && ($c = mysqli_fetch_assoc($r))) { $all[] = $c['COLUMN_NAME']; if ($c['COLUMN_KEY'] === 'PRI') $pk[] = $c['COLUMN_NAME']; if (in_array($c['DATA_TYPE'], ['varchar', 'char', 'text', 'tinytext', 'mediumtext', 'longtext', 'json'])) $cols[] = $c['COLUMN_NAME']; }
+            if (!$cols || !$pk) { $rp['ti']++; $rp['last'] = null; $rp['offset'] = 0; continue; }
+            $like = implode(' OR ', array_map(function ($c) use ($pairs, $link) { $o = []; foreach ($pairs as $p) $o[] = '`' . $c . '` LIKE \'%' . mysqli_real_escape_string($link, str_replace(['%', '_'], ['\\%', '\\_'], $p[0])) . '%\''; return implode(' OR ', $o); }, $cols));
+            $pkq = implode(',', array_map(function ($c) { return '`' . $c . '`'; }, $pk)); $sel = implode(',', array_map(function ($c) { return '`' . $c . '`'; }, array_unique(array_merge($pk, $cols))));
+            while (true) {
+                if (microtime(true) - $t0 > STEP_SECONDS) { mysqli_close($link); rs_save($st); json_out(['ok' => true, 'state' => $rp, 'elapsed' => round(microtime(true) - $t0, 1)]); }
+                $r = mysqli_query($link, "SELECT $sel FROM $tq WHERE ($like) ORDER BY $pkq LIMIT 300 OFFSET {$rp['offset']}");
+                if (!$r) { $rp['log'][] = "$t: " . mysqli_error($link); break; }
+                $n = 0; $chg = 0;
+                while ($row = mysqli_fetch_assoc($r)) {
+                    $n++; $set = [];
+                    foreach ($cols as $c) { $nv = rs_replace_value($row[$c], $pairs); if ($nv !== $row[$c]) $set[] = '`' . $c . '` = \'' . mysqli_real_escape_string($link, $nv) . '\''; }
+                    if (!$set) continue;
+                    $where = implode(' AND ', array_map(function ($c) use ($row, $link) { return '`' . $c . '` = \'' . mysqli_real_escape_string($link, $row[$c]) . '\''; }, $pk));
+                    if (!$dry) { if (!mysqli_query($link, "UPDATE $tq SET " . implode(', ', $set) . " WHERE $where")) $rp['log'][] = "$t: " . mysqli_error($link); }
+                    $chg++;
+                }
+                mysqli_free_result($r); $rp['rows'] += $n; $rp['changed'] += $chg; if ($chg) $rp['log'][] = "$t: $chg";
+                // ถ้าแทนที่จริง แถวที่แก้แล้วจะไม่ตรง LIKE อีก จึงไม่เลื่อน offset; ถ้า dry run ต้องเลื่อน
+                $rp['offset'] += ($dry || $selfRef) ? $n : ($n - $chg);
+                if ($n < 300) break;
+            }
+            $rp['ti']++; $rp['offset'] = 0;
+        }
+        mysqli_close($link); $rp['done'] = true; rs_save($st); json_out(['ok' => true, 'state' => $rp, 'elapsed' => round(microtime(true) - $t0, 1)]);
+    }
+
     if ($action === 'import') {
-        $file = basename((string)$in['file']);
+        $file = safe_rel($in['file']);
         $path = ROOT . '/' . $file;
-        if (!is_file($path)) json_out(['ok' => false, 'msg' => t('ไม่พบไฟล์')]);
+        if ($file === '' || !is_file($path)) json_out(['ok' => false, 'msg' => t('ไม่พบไฟล์')]);
         $state = load_state();
         $reset = !empty($in['reset']) || empty($state['file']) || $state['file'] !== $file;
         if ($reset) {
@@ -798,7 +1054,7 @@ if ($action !== '') {
             if (!preg_match('/\.sql$/i', $sqlFile)) $sqlFile .= '.sql';
             $r = gunzip_step($path, $sqlFile, (int)$state['gz_offset']);
             if (isset($r['error'])) json_out(['ok' => false, 'msg' => $r['error']]);
-            $state['gz_offset'] = $r['offset']; $state['gz_compressed'] = $r['compressed']; $state['sql_file'] = basename($sqlFile);
+            $state['gz_offset'] = $r['offset']; $state['gz_compressed'] = $r['compressed']; $state['sql_file'] = substr($sqlFile, strlen(ROOT) + 1);
             if ($r['done']) { $state['phase'] = 'import'; $state['offset'] = 0; }
             save_state($state);
             json_out(['ok' => true, 'state' => $state, 'elapsed' => $r['elapsed'], 'seek' => $r['seek']]);
@@ -875,6 +1131,7 @@ if ($action !== '') {
 // ---------------------------------------------------------------- page
 $cfg = read_config();
 $files = sql_files();
+$rsLocal = rs_local_packages();
 $state = load_state();
 $ob = ini_get('open_basedir');
 list($tmpOk, $tmpMsg) = path_status(isset($cfg['tmp_path']) ? $cfg['tmp_path'] : '');
@@ -912,7 +1169,8 @@ $hasHt = file_exists(ROOT . '/.htaccess');
   h2[data-n="2.1"]::before,h2[data-n="2.2"]::before{font-size:15px}
   h2[data-n="3"]::before{background:var(--orange);color:#111}
   h2[data-n="4"]::before{background:var(--red)}
-  h2[data-n="5"]::before{background:var(--ink);color:var(--paper)}
+  h2[data-n="5"]::before{background:var(--blue)}
+  h2[data-n="6"]::before{background:var(--ink);color:var(--paper)}
   label{display:block;font-size:15px;font-weight:500;color:var(--gray);margin:16px 0 8px;line-height:1.35}
   input[type=text],input[type=password],select{width:100%;min-height:48px;padding:10px 14px;border:2px solid var(--line);border-radius:var(--radius-sm);font:17px/24px var(--font-body);background:var(--paper);color:var(--ink)}
   input:focus,select:focus{outline:none;border-color:var(--blue);box-shadow:var(--shadow-focus)}
@@ -972,7 +1230,7 @@ $hasHt = file_exists(ROOT . '/.htaccess');
     <tr><td>open_basedir</td><td class="mono"><?= h($ob ?: t('(ไม่จำกัด)')) ?></td></tr>
     <tr><td><?= t('tmp_path ปัจจุบัน') ?></td><td><span class="mono"><?= h($cfg['tmp_path'] ?? '-') ?></span> <span class="<?= $tmpOk ? 'ok' : 'bad' ?>"><?= h($tmpMsg) ?></span></td></tr>
     <tr><td><?= t('log_path ปัจจุบัน') ?></td><td><span class="mono"><?= h($cfg['log_path'] ?? '-') ?></span> <span class="<?= $logOk ? 'ok' : 'bad' ?>"><?= h($logMsg) ?></span></td></tr>
-    <tr><td>.htaccess</td><td><?= $hasHt ? t('<span class=ok>มี</span>') : t('<span class=bad>ไม่มี</span> (ใช้เครื่องมือข้อ 4 สร้างได้)') ?></td></tr>
+    <tr><td>.htaccess</td><td><?= $hasHt ? t('<span class=ok>มี</span>') : t('<span class=bad>ไม่มี</span> (ใช้เครื่องมือข้อ 5 สร้างได้)') ?></td></tr>
   </table>
 </div>
 
@@ -1044,7 +1302,45 @@ $hasHt = file_exists(ROOT . '/.htaccess');
 </div>
 
 <div class="card">
-  <h2 data-n="3"><?= t('นำเข้าฐานข้อมูล (แบ่งรอบ ป้องกัน timeout)') ?></h2>
+  <h2 data-n="3"><?= t('กู้จากแพ็กเกจ (jbackup)') ?></h2>
+  <div class="stat"><?= t('แพ็กเกจคือโฟลเดอร์ jbackup-ชื่อ/ ที่สร้างด้วย jbackup.php บน server เดิม มี db.sql.gz, site-partN.zip และ manifest.json ดึงตรงจาก server เดิมผ่าน HTTPS หรืออัปโหลดโฟลเดอร์มาวางที่ root ของเว็บนี้ก็ได้') ?></div>
+  <label><?= t('URL ของ jbackup.php บน server เดิม (ใช้ MIGRATE_KEY เดียวกัน)') ?></label>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-start">
+    <input type="text" id="rs_source" placeholder="https://old-domain.com/jbackup.php" style="flex:1 1 360px">
+    <button class="sec" style="margin-top:0" onclick="rsRemoteList()"><?= t('ดูแพ็กเกจบน server เดิม') ?></button>
+  </div>
+  <label><?= t('แพ็กเกจ') ?></label>
+  <select id="rs_pkg">
+    <?php foreach ($rsLocal as $lp): ?>
+      <option value="local:<?= h($lp['name']) ?>"><?= h($lp['name']) ?> — <?= t('อยู่บน server นี้แล้ว') ?><?= $lp['manifest'] ? ' · ' . h($lp['manifest']['site']['host'] ?? '') . ' · Joomla ' . h($lp['manifest']['site']['joomla'] ?? '?') : '' ?></option>
+    <?php endforeach; ?>
+    <?php if (!$rsLocal): ?><option value=""><?= t('ยังไม่มีแพ็กเกจ — ใส่ URL ด้านบนแล้วกด "ดูแพ็กเกจบน server เดิม" หรืออัปโหลดโฟลเดอร์ jbackup-* มาวางแล้วรีเฟรช') ?></option><?php endif; ?>
+  </select>
+  <div class="chk"><input type="checkbox" id="rs_do_extract" checked><label for="rs_do_extract"><?= t('แตกไฟล์เว็บทับโฟลเดอร์นี้ (configuration.php เดิมจะถูกสำรองเป็น .bak-restore)') ?></label></div>
+  <button id="rs_btn" onclick="rsStart(true)"><?= t('ดึงและแตกแพ็กเกจ') ?></button>
+  <button class="sec" id="rs_resume" onclick="rsStart(false)"><?= t('ทำต่อจากจุดเดิม') ?></button>
+  <button class="sec" id="rs_stop" onclick="rsStop()" disabled><?= t('หยุดชั่วคราว') ?></button>
+  <div class="bar"><i id="rs_bar"></i></div>
+  <div class="stat" id="rs_prog"><?= t('ยังไม่เริ่ม') ?></div>
+  <pre id="rs_log" style="display:none"></pre>
+  <div style="margin-top:22px;padding-top:18px;border-top:1px solid var(--line)">
+    <div style="font-size:20px;font-weight:500"><?= t('แทนที่โดเมน / path เดิมในฐานข้อมูล') ?></div>
+    <div class="stat"><?= t('ทำหลังนำเข้าฐานข้อมูลแล้ว รองรับค่าที่เป็น JSON และ serialized (params ของ Joomla, YOOtheme, Gantry) ไม่ทำให้ข้อมูลพัง') ?></div>
+    <div class="row">
+      <div><label><?= t('โดเมนเดิม') ?></label><input type="text" id="rp_from1" placeholder="old-domain.com"></div>
+      <div><label><?= t('โดเมนใหม่') ?></label><input type="text" id="rp_to1" value="<?= h($_SERVER['HTTP_HOST']) ?>"></div>
+      <div><label><?= t('path เดิมของเว็บ') ?></label><input type="text" id="rp_from2" class="mono" placeholder="/home/olduser/domains/old-domain.com/public_html"></div>
+      <div><label><?= t('path ใหม่') ?></label><input type="text" id="rp_to2" class="mono" value="<?= h(ROOT) ?>"></div>
+    </div>
+    <div class="chk"><input type="checkbox" id="rp_dry"><label for="rp_dry"><?= t('ทดสอบก่อน (นับแถวที่จะเปลี่ยน ไม่แก้จริง)') ?></label></div>
+    <button onclick="rpStart()" id="rp_btn"><?= t('แทนที่ในฐานข้อมูล') ?></button>
+    <div class="stat" id="rp_prog"></div>
+    <pre id="rp_log" style="display:none"></pre>
+  </div>
+</div>
+
+<div class="card">
+  <h2 data-n="4"><?= t('นำเข้าฐานข้อมูล (แบ่งรอบ ป้องกัน timeout)') ?></h2>
   <?php if (!$files): ?>
     <div class="warn"><?= t('ไม่พบไฟล์ .sql หรือ .sql.gz ในโฟลเดอร์นี้ ให้อัปโหลดไฟล์ dump มาวางไว้ที่เดียวกับ jmigrate.php แล้วรีเฟรช') ?></div>
   <?php endif; ?>
@@ -1078,7 +1374,7 @@ $hasHt = file_exists(ROOT . '/.htaccess');
 </div>
 
 <div class="card">
-  <h2 data-n="4"><?= t('เครื่องมือเสริม') ?></h2>
+  <h2 data-n="5"><?= t('เครื่องมือเสริม') ?></h2>
   <button class="sec" onclick="tool('dirs')"><?= t('สร้างโฟลเดอร์ tmp / logs / cache') ?></button>
   <button class="sec" onclick="tool('htaccess')"><?= t('สร้าง .htaccess จาก htaccess.txt') ?></button>
   <button class="sec" onclick="tool('session')"><?= t('ล้างตาราง session') ?></button>
@@ -1088,7 +1384,7 @@ $hasHt = file_exists(ROOT . '/.htaccess');
 </div>
 
 <div class="card">
-  <h2 data-n="5"><?= t('เสร็จแล้ว') ?></h2>
+  <h2 data-n="6"><?= t('เสร็จแล้ว') ?></h2>
   <p class="stat"><?= t('เมื่อเว็บใช้งานได้แล้ว ให้ลบเครื่องมือนี้ออกทันที (รวมไฟล์ state และไฟล์สำรอง configuration.php) และอย่าลืมลบไฟล์ .sql ที่อัปโหลดมาด้วย') ?></p>
   <button class="danger" onclick="if(confirm(t('ลบ jmigrate.php ออกจาก server?')))tool('selfdestruct')"><?= t('ลบไฟล์เครื่องมือนี้') ?></button>
 </div>
@@ -1170,6 +1466,69 @@ async function saveToggles() {
 }
 function presetDebug() { $('t_debug').checked = true; $('t_error_reporting').value = 'maximum'; $('t_caching').checked = false; saveToggles(); }
 function presetLive() { $('t_debug').checked = false; $('t_error_reporting').value = 'default'; $('t_offline').checked = false; saveToggles(); }
+
+// ---- restore from package
+let rsRunning = false;
+function rsUi(on) { rsRunning = on; $('rs_btn').disabled = on; $('rs_resume').disabled = on; $('rs_stop').disabled = !on; }
+function rsStop() { rsRunning = false; }
+function rsLog(s) { const l = $('rs_log'); l.style.display = 'block'; l.textContent += s + '\n'; l.scrollTop = l.scrollHeight; }
+async function rsRemoteList() {
+  $('rs_prog').textContent = t('กำลังติดต่อ server เดิม...');
+  const r = await api('rs_remote_list', {source: $('rs_source').value});
+  if (!r.ok) { $('rs_prog').innerHTML = '<span class=bad>' + esc(r.msg) + '</span>'; return; }
+  const sel = $('rs_pkg'); [...sel.options].filter(o => o.value.startsWith('remote:')).forEach(o => o.remove());
+  r.packages.forEach(p => { const o = document.createElement('option'); o.value = 'remote:' + p.name; o.textContent = p.name + ' — ' + t('บน server เดิม') + ' · ' + fmt(p.size) + (p.done ? '' : ' · ' + t('ยังสร้างไม่เสร็จ')); sel.insertBefore(o, sel.firstChild); });
+  if (r.packages.length) { sel.selectedIndex = 0; $('rs_prog').innerHTML = '<span class=ok>✔ ' + t('พบ') + ' ' + r.packages.length + ' ' + t('แพ็กเกจ') + '</span>'; } else $('rs_prog').textContent = t('server เดิมยังไม่มีแพ็กเกจ');
+}
+async function rsStart(reset) {
+  const v = $('rs_pkg').value; if (!v) return;
+  const [kind, name] = v.split(/:(.*)/s);
+  rsUi(true); if (reset) $('rs_log').textContent = '';
+  let ok = true;
+  if (kind === 'remote') ok = await rsLoop('rs_pull', {source: $('rs_source').value, name, reset}, s => {
+    const pct = s.total ? s.bytes / s.total * 100 : 0; $('rs_bar').style.width = (pct * 0.5).toFixed(1) + '%';
+    $('rs_prog').textContent = t('กำลังดึงแพ็กเกจ') + ' ' + fmt(s.bytes) + ' / ' + fmt(s.total) + ' · ' + t('ไฟล์') + ' ' + (s.i + 1) + '/' + s.files.length;
+  });
+  if (ok && $('rs_do_extract').checked) ok = await rsLoop('rs_extract', {pkg: 'jbackup-' + name, reset}, s => {
+    const pct = s.total ? s.files / s.total * 100 : 0; $('rs_bar').style.width = (50 + pct * 0.5).toFixed(1) + '%';
+    $('rs_prog').textContent = t('กำลังแตกไฟล์') + ' ' + s.files.toLocaleString() + ' / ' + (s.total || '?') + ' ' + t('ไฟล์') + ' · ' + fmt(s.bytes) + ' · ' + t('ส่วน') + ' ' + (s.pi + 1) + '/' + s.parts.length;
+    if (s.done && s.suggest) {
+      if (s.suggest.prefix) $('prefix').value = s.suggest.prefix;
+      if (s.suggest.old_host) $('rp_from1').value = s.suggest.old_host;
+      if (s.suggest.old_root) $('rp_from2').value = s.suggest.old_root;
+      if (s.suggest.db_file) { const sel = $('file'); let o = [...sel.options].find(x => x.value === s.suggest.db_file); if (!o) { o = document.createElement('option'); o.value = s.suggest.db_file; o.textContent = s.suggest.db_file; sel.appendChild(o); } sel.value = s.suggest.db_file; }
+      if (s.warnings.length) rsLog(t('คำเตือน') + ':\n' + s.warnings.join('\n'));
+    }
+  });
+  if (ok) { $('rs_bar').style.width = '100%'; $('rs_prog').innerHTML = '<span class=ok>✔ ' + t('เสร็จแล้ว') + '</span> — ' + t('ต่อไป: ข้อ 4 นำเข้าฐานข้อมูล (เลือกไฟล์ db.sql.gz ให้แล้ว) → ข้อ 2 บันทึก configuration.php → แทนที่โดเมน/path ด้านล่าง'); }
+  rsUi(false);
+}
+async function rsLoop(action, data, render) {
+  let first = true, fails = 0;
+  while (rsRunning) {
+    const d = Object.assign({}, data, {reset: first && data.reset}); first = false;
+    let r; try { r = await api(action, d); } catch (e) { r = {ok:false, msg:'network: ' + e}; }
+    if (!r.ok) { if (r.state) render(r.state); if (++fails <= 3) { rsLog(t('รอบนี้ล้มเหลว (') + r.msg + t(') ลองใหม่ครั้งที่ ') + fails); await new Promise(x => setTimeout(x, 3000)); continue; } $('rs_prog').innerHTML = '<span class=bad>' + esc(r.msg) + '</span>'; return false; }
+    fails = 0; render(r.state); if (r.state.done) return true;
+  }
+  return false;
+}
+async function rpStart() {
+  const pairs = [[$('rp_from1').value.trim(), $('rp_to1').value.trim()], [$('rp_from2').value.trim(), $('rp_to2').value.trim()]].filter(p => p[0] && p[0] !== p[1]);
+  if (!pairs.length) { $('rp_prog').innerHTML = '<span class=bad>' + t('ไม่มีคู่ข้อความที่จะแทนที่') + '</span>'; return; }
+  const dry = $('rp_dry').checked;
+  if (!dry && !confirm(t('แทนที่ในฐานข้อมูลจริง? ควรสำรองหรือทดสอบก่อน'))) return;
+  $('rp_btn').disabled = true; $('rp_log').textContent = ''; let first = true;
+  while (true) {
+    const d = Object.assign(dbData(), {pairs, dryrun: dry, reset: first}); first = false;
+    const r = await api('rs_replace', d);
+    if (!r.ok) { $('rp_prog').innerHTML = '<span class=bad>' + esc(r.msg) + '</span>'; break; }
+    const s = r.state; $('rp_prog').textContent = (dry ? t('ทดสอบ') + ': ' : '') + t('ตาราง') + ' ' + s.ti + '/' + s.tables.length + ' · ' + t('แถวที่ตรวจ') + ' ' + s.rows.toLocaleString() + ' · ' + t('แถวที่เปลี่ยน') + ' ' + s.changed.toLocaleString();
+    if (s.log.length) { const l = $('rp_log'); l.style.display = 'block'; l.textContent = s.log.join('\n'); }
+    if (s.done) { $('rp_prog').innerHTML = '<span class=ok>✔ ' + (dry ? t('ทดสอบเสร็จ จะเปลี่ยน') : t('แทนที่แล้ว')) + ' ' + s.changed.toLocaleString() + ' ' + t('แถว') + '</span>'; break; }
+  }
+  $('rp_btn').disabled = false;
+}
 
 let running = false;
 function setUi(on) { running = on; $('btnStart').disabled = on; $('btnStop').disabled = !on; const rb = $('btnResume'); if (rb) rb.disabled = on; }

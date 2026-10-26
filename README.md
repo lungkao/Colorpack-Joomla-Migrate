@@ -1,4 +1,4 @@
-# Colorpack Joomla Migrate V1.0.0
+# Colorpack Joomla Migrate V1.1.0
 
 **[EN]** Single-file PHP tool for moving a Joomla 3 / 4 / 5 site to a new server.
 Fixes `configuration.php` paths, tests the database, imports huge `.sql` / `.sql.gz` dumps in
@@ -11,13 +11,17 @@ upload → open → migrate → delete.
 พร้อมระบบแก้ error การนำเข้าอัตโนมัติ และเครื่องมือเสริมที่ต้องใช้หลังย้ายทุกครั้ง (`.htaccess`, โฟลเดอร์, cache, ตาราง session)
 ไม่ต้องติดตั้ง — อัปโหลด → เปิด → ย้าย → ลบทิ้ง
 
-**File / ไฟล์:** [`jmigrate.php`](jmigrate.php) (V1.0.0 · requires PHP 7.0+ with `mysqli`, `zlib` for `.gz` / ต้องใช้ PHP 7.0+ พร้อม `mysqli` และ `zlib` สำหรับ `.gz`)
+**Files / ไฟล์:**
+- [`jmigrate.php`](jmigrate.php) — on the **new** server: restore package, import DB, fix config / วางบน server **ใหม่**: กู้แพ็กเกจ นำเข้า DB แก้ config
+- [`jbackup.php`](jbackup.php) — on the **old** server: build the migration package (files + DB) / วางบน server **เดิม**: สร้างแพ็กเกจย้ายเว็บ (ไฟล์ + DB)
+
+(V1.1.0 · requires PHP 7.0+ with `mysqli` and `zlib` / ต้องใช้ PHP 7.0+ พร้อม `mysqli` และ `zlib`)
 
 **Interface / หน้าจอ:** ไทย / English — switch in the top bar / สลับได้ที่แถบด้านบน
 
-| ไทย | English |
-|-----|---------|
-| ![TH](screenshot-th.png) | ![EN](screenshot-en.png) |
+| jmigrate.php (TH) | jmigrate.php (EN) | jbackup.php |
+|-----|---------|---------|
+| ![TH](screenshot-th.png) | ![EN](screenshot-en.png) | ![Backup](screenshot-backup.png) |
 
 ---
 
@@ -44,6 +48,24 @@ upload → open → migrate → delete.
 
 > ทำเสร็จแล้ว **ลบไฟล์ออกจาก server ทันที** (มีปุ่มให้) เพราะเครื่องมือนี้แก้ `configuration.php` และฐานข้อมูลได้
 
+### Full-site migration (files + database) / ย้ายทั้งเว็บ (ไฟล์ + ฐานข้อมูล)
+
+**[EN]** Use the same `MIGRATE_KEY` in both files.
+1. **Old server:** upload `jbackup.php` to the site root, open `jbackup.php?key=…`, press **Build package**. It dumps the database table by table and zips the site files in resumable rounds into `jbackup-<name>/` (db.sql.gz, site-partN.zip, manifest.json with checksums).
+2. **New server:** upload `jmigrate.php` to the empty site root, open it, go to **3 Restore from package**, paste the old server's `jbackup.php` URL, press **List packages**, pick one, press **Pull and extract**. Files are pulled over HTTPS in 8 MB ranges, verified by checksum and extracted in rounds. (Or upload the `jbackup-*` folder yourself and pick it from the list.)
+3. **4 Import database** — `db.sql.gz` from the package is pre-selected, the table prefix is filled from the manifest.
+4. **2 Database & configuration.php** — enter the new DB credentials and save; paths are auto-detected.
+5. **Replace old domain / path** (bottom of section 3) if the domain or server path changed — serialized- and JSON-safe.
+6. Section 5 tools (`.htaccess`, cache), then delete both tools and the package folders.
+
+**[TH]** ใช้ `MIGRATE_KEY` เดียวกันทั้งสองไฟล์
+1. **server เดิม:** อัปโหลด `jbackup.php` ไว้ที่ root ของเว็บ เปิด `jbackup.php?key=…` กด **สร้างแพ็กเกจ** ระบบจะ dump ฐานข้อมูลทีละตาราง และ zip ไฟล์เว็บแบบแบ่งรอบ ได้โฟลเดอร์ `jbackup-<ชื่อ>/` (db.sql.gz, site-partN.zip, manifest.json พร้อม checksum)
+2. **server ใหม่:** อัปโหลด `jmigrate.php` ไว้ที่ root ว่าง ๆ เปิด → ข้อ **3 กู้จากแพ็กเกจ** → วาง URL ของ `jbackup.php` บน server เดิม → กด **ดูแพ็กเกจบน server เดิม** → เลือก → กด **ดึงและแตกแพ็กเกจ** ระบบจะดึงไฟล์ผ่าน HTTPS ทีละ 8 MB ตรวจ checksum แล้วแตกไฟล์แบบแบ่งรอบ (หรืออัปโหลดโฟลเดอร์ `jbackup-*` มาวางเองแล้วเลือกจากรายการ)
+3. **ข้อ 4 นำเข้าฐานข้อมูล** — เลือก `db.sql.gz` จากแพ็กเกจให้แล้ว prefix เติมจาก manifest
+4. **ข้อ 2 ฐานข้อมูลและ configuration.php** — กรอก DB ใหม่แล้วบันทึก path ตรวจให้อัตโนมัติ
+5. **แทนที่โดเมน / path เดิม** (ท้ายข้อ 3) ถ้าเปลี่ยนโดเมนหรือ path ปลอดภัยกับค่า serialized และ JSON
+6. เครื่องมือข้อ 5 (`.htaccess`, cache) แล้วลบเครื่องมือทั้งสองและโฟลเดอร์แพ็กเกจทิ้ง
+
 ---
 
 ## What it does / ทำอะไรได้บ้าง
@@ -63,7 +85,9 @@ bad `dbprefix`, short `secret`, `live_site` pointing at another domain, file per
 **2.2 Migration config** — Debug, Error Reporting (default / none / simple / maximum / development), Site Offline
 (+ message), SEF, URL Rewriting, System Cache, with one-click *troubleshoot* and *production* presets.
 
-**3. Chunked import** — reads the dump statement by statement and works in rounds of ~8 seconds (`STEP_SECONDS`),
+**3. Restore from package** — lists packages on the old server through its `jbackup.php`, pulls every part with HTTP Range requests (resumable, checksum-verified), extracts the zips with a built-in reader (no `ext/zip` needed; Thai file names and empty folders preserved), backs up the current `configuration.php` as `.bak-restore`, pre-fills prefix / DB file / old host and path from the manifest. Includes a serialized- and JSON-safe **search & replace** for the old domain and path across all text columns.
+
+**4. Chunked import** — reads the dump statement by statement and works in rounds of ~8 seconds (`STEP_SECONDS`),
 remembering its position in `jmigrate-state.json`, so a multi-GB dump never hits a 504 / `max_execution_time`.
 Pause and **resume** at any time. `.gz` files are extracted in rounds too (with a guard against duplicate writes).
 Options:
@@ -74,10 +98,10 @@ Options:
 - **Dry run** — read only; reports the largest tables so you can decide what to skip
 - Progress bar, statements / skipped / converted / fixed / error counters, and a log of every fix applied
 
-**4. Tools** — create `tmp` / `logs` / `cache` folders, create `.htaccess` from `htaccess.txt` (or a basic one),
+**5. Tools** — create `tmp` / `logs` / `cache` folders, create `.htaccess` from `htaccess.txt` (or a basic one),
 truncate the session table, clear Joomla cache, convert existing MyISAM tables to InnoDB.
 
-**5. Self-destruct** — removes `jmigrate.php`, the state file and the config backups.
+**6. Self-destruct** — removes `jmigrate.php`, the state file and the config backups.
 
 
 ### TH — ทำอะไรได้บ้าง
@@ -95,7 +119,9 @@ truncate the session table, clear Joomla cache, convert existing MyISAM tables t
 **2.2 คอนฟิกช่วงย้ายเว็บ** — Debug, Error Reporting (default / none / simple / maximum / development), Site Offline (+ ข้อความ),
 SEF, URL Rewriting, System Cache พร้อมปุ่มลัด *โหมดหาสาเหตุ* และ *โหมดใช้งานจริง*
 
-**3. นำเข้าแบบแบ่งรอบ** — อ่าน dump ทีละคำสั่ง ทำงานรอบละประมาณ 8 วินาที (`STEP_SECONDS`) และจำตำแหน่งไว้ใน `jmigrate-state.json`
+**3. กู้จากแพ็กเกจ** — ดูรายการแพ็กเกจบน server เดิมผ่าน `jbackup.php`, ดึงทุกส่วนด้วย HTTP Range (ทำต่อได้ ตรวจ checksum), แตก zip ด้วยตัวอ่านในตัว (ไม่ต้องมี `ext/zip` ชื่อไฟล์ไทยและโฟลเดอร์ว่างครบ), สำรอง `configuration.php` ปัจจุบันเป็น `.bak-restore`, เติม prefix / ไฟล์ DB / โดเมนและ path เดิมจาก manifest ให้ พร้อม **search & replace** โดเมนและ path เดิมในทุกคอลัมน์ข้อความ ปลอดภัยกับ serialized และ JSON
+
+**4. นำเข้าแบบแบ่งรอบ** — อ่าน dump ทีละคำสั่ง ทำงานรอบละประมาณ 8 วินาที (`STEP_SECONDS`) และจำตำแหน่งไว้ใน `jmigrate-state.json`
 ไฟล์หลาย GB จึงไม่ติด 504 / `max_execution_time` หยุดและ**ทำต่อ**ได้ทุกเมื่อ ไฟล์ `.gz` แตกเป็นรอบเช่นกัน (มีตัวกันเขียนซ้ำ)
 ตัวเลือก:
 - **ข้ามข้อมูล** ของตารางที่ชื่อมีคำที่กำหนด (สร้างตารางแต่ไม่ใส่ข้อมูล เหมาะกับ `session`, `*_logs`, `rsseo_error_links`, `flexicontent_items_versions`, …)
@@ -104,10 +130,16 @@ SEF, URL Rewriting, System Cache พร้อมปุ่มลัด *โหม
 - **Dry run** — อ่านอย่างเดียว แล้วสรุปตารางที่ใหญ่ที่สุดเพื่อตัดสินใจว่าจะข้ามอะไร
 - แถบความคืบหน้า, ตัวนับคำสั่ง / ข้าม / แปลง / แก้ / error และ log ของทุกการแก้ที่ใช้
 
-**4. เครื่องมือเสริม** — สร้างโฟลเดอร์ `tmp` / `logs` / `cache`, สร้าง `.htaccess` จาก `htaccess.txt` (หรือแบบพื้นฐาน),
+**5. เครื่องมือเสริม** — สร้างโฟลเดอร์ `tmp` / `logs` / `cache`, สร้าง `.htaccess` จาก `htaccess.txt` (หรือแบบพื้นฐาน),
 ล้างตาราง session, ล้าง cache ของ Joomla, แปลงตาราง MyISAM ที่มีอยู่เป็น InnoDB
 
-**5. ลบตัวเอง** — ลบ `jmigrate.php`, ไฟล์ state และไฟล์สำรอง config
+**6. ลบตัวเอง** — ลบ `jmigrate.php`, ไฟล์ state และไฟล์สำรอง config
+
+### jbackup.php (old server) / ฝั่ง server เดิม
+
+**[EN]** Dumps the database table by table (keyset-paged, 1,000 rows per INSERT, binary columns as hex, views without DEFINER, skip-data list) into `db.sql.gz`, scans the site tree and writes the files into standalone zip parts with its own streaming writer (append-only, so a 5 GB site never rewrites the archive; parts split at the chosen size; files over 64 MB are stored uncompressed for speed). Excludes `cache`, `tmp`, `logs`, `.git`, old backups and itself. Writes `manifest.json` (Joomla version, prefix, root, host, counts, MD5 of every part). Serves the parts with HTTP Range support and a package list for `jmigrate.php`; the package folder is protected by `.htaccess` and the key. Resumable, pause/resume, delete, self-destruct.
+
+**[TH]** dump ฐานข้อมูลทีละตาราง (แบ่งหน้าแบบ keyset, 1,000 แถวต่อ INSERT, คอลัมน์ binary เป็น hex, view ไม่มี DEFINER, รายการข้ามข้อมูล) เป็น `db.sql.gz`, สำรวจไฟล์เว็บแล้วเขียนเป็น zip หลายส่วนด้วยตัวเขียนแบบสตรีมของตัวเอง (เขียนต่อท้ายอย่างเดียว เว็บ 5 GB ก็ไม่ต้องเขียนไฟล์ใหม่ทั้งก้อน; แบ่งส่วนตามขนาดที่เลือก; ไฟล์เกิน 64 MB เก็บแบบไม่บีบอัดเพื่อความเร็ว) ยกเว้น `cache`, `tmp`, `logs`, `.git`, backup เก่า และตัวมันเอง เขียน `manifest.json` (เวอร์ชัน Joomla, prefix, root, โดเมน, จำนวน, MD5 ทุกส่วน) ให้ `jmigrate.php` ดึงได้แบบ HTTP Range โฟลเดอร์แพ็กเกจกันด้วย `.htaccess` และ key ทำต่อได้ หยุด/ทำต่อ ลบ ลบตัวเอง
 
 ### Automatic import-error fixing / การแก้ error อัตโนมัติ
 
@@ -137,6 +169,7 @@ SEF, URL Rewriting, System Cache พร้อมปุ่มลัด *โหม
 | `STEP_SECONDS` | Seconds of work per round (default 8; lower it if your server times out early) | เวลาทำงานต่อรอบ (ค่าเริ่มต้น 8 ถ้า server timeout ไวให้ลดลง) |
 | `GZ_CHUNK` | Upper bound of bytes extracted from a `.gz` per round | เพดานจำนวน byte ที่แตกจาก `.gz` ต่อรอบ |
 | `BMC_URL` | Buy-me-a-coffee link shown in the footer | ลิงก์ Buy me a coffee ที่แสดงใน footer |
+| `PART_SIZE` / `STORE_OVER` (jbackup) | Zip part size; files larger than this are stored uncompressed | ขนาดต่อส่วนของ zip; ไฟล์ใหญ่กว่านี้เก็บแบบไม่บีบอัด |
 
 ---
 
@@ -160,6 +193,19 @@ SEF, URL Rewriting, System Cache พร้อมปุ่มลัด *โหม
 ---
 
 ## Changelog / บันทึกการแก้ไข
+
+### 1.1.0 — 2026-10-26
+**[EN]** Full-site migration.
+- New `jbackup.php` for the old server: resumable database dump + streaming multi-part zip of the site files, manifest with checksums, Range-enabled download endpoint, package list
+- `jmigrate.php` section 3 **Restore from package**: list packages on the old server, pull over HTTPS in resumable 8 MB ranges with checksum verification (or use an uploaded `jbackup-*` folder), extract with a built-in zip reader, pre-fill prefix / DB file / old host and path from the manifest
+- Serialized- and JSON-safe **search & replace** of the old domain and path in the database, with a dry-run count
+- DB import now also lists `jbackup-*/db.sql.gz`; sections renumbered (import 4, tools 5, finish 6)
+
+**[TH]** ย้ายทั้งเว็บ
+- เพิ่ม `jbackup.php` สำหรับ server เดิม: dump ฐานข้อมูลแบบทำต่อได้ + zip ไฟล์เว็บหลายส่วนแบบสตรีม, manifest พร้อม checksum, endpoint ดาวน์โหลดรองรับ Range, รายการแพ็กเกจ
+- `jmigrate.php` ข้อ 3 **กู้จากแพ็กเกจ**: ดูแพ็กเกจบน server เดิม, ดึงผ่าน HTTPS ทีละ 8 MB ทำต่อได้ ตรวจ checksum (หรือใช้โฟลเดอร์ `jbackup-*` ที่อัปโหลดมา), แตกไฟล์ด้วยตัวอ่าน zip ในตัว, เติม prefix / ไฟล์ DB / โดเมนและ path เดิมจาก manifest
+- **search & replace** โดเมนและ path เดิมในฐานข้อมูล ปลอดภัยกับ serialized และ JSON มีโหมดทดสอบนับแถว
+- นำเข้า DB เห็นไฟล์ `jbackup-*/db.sql.gz` ด้วย; เลขข้อเปลี่ยน (นำเข้า 4, เครื่องมือ 5, เสร็จ 6)
 
 ### 1.0.0 — 2026-10-25
 **[EN]** First public release.

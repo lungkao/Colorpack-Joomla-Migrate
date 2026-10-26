@@ -1,6 +1,9 @@
 jmigrate-state.json
+jmigrate-restore.json
+jbackup-*/
 *.sql
 *.sql.gz
 *.gz
 configuration.php.bak-*
+configuration.php.bak-restore
 .DS_Store
