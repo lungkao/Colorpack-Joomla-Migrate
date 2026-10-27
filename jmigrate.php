@@ -21,7 +21,7 @@
 const MIGRATE_KEY   = 'changeme123';   // <<< แก้เป็นรหัสของคุณ
 const STEP_SECONDS  = 8;               // เวลาทำงานต่อรอบ (วินาที) ต่ำกว่า timeout ของ server
 const TOOL_TITLE   = 'Joomla Migrate Tool';
-const TOOL_VERSION  = '1.2.0';
+const TOOL_VERSION  = '1.2.1';
 const BMC_URL       = 'https://buymeacoffee.com/cheuachatchai'; // Buy me a coffee
 const GZ_CHUNK      = 512 * 1024 * 1024; // เพดานขนาดที่แตก gz ต่อรอบ (bytes) ปกติจบที่เวลาก่อน
 
@@ -44,6 +44,9 @@ if (isset($_GET['lang'])) @setcookie('jm_lang', $LANG, time() + 86400 * 30, '/')
 $GLOBALS['JM_LANG'] = $LANG;
 function t($s) { return ($GLOBALS['JM_LANG'] === 'en' && isset($GLOBALS['JM_EN'][$s])) ? $GLOBALS['JM_EN'][$s] : $s; }
 $GLOBALS['JM_EN'] = [
+    'ควรเป็น' => 'should be',
+    'แก้ให้เลย' => 'Fix it now',
+    'สร้าง .htaccess ให้เลย' => 'Create .htaccess now',
     'แพ็กเกจอยู่ที่ไหน' => 'Where is the package?',
     'ไม่ต้องดาวน์โหลด แค่แตกไฟล์' => 'no download needed, just extract',
     'ยังไม่พบโฟลเดอร์ jbackup-* ที่ root — อัปโหลดมาวางแล้วรีเฟรช' => 'no jbackup-* folder in the root yet — upload one and refresh',
@@ -952,6 +955,12 @@ if ($action !== '') {
         json_out(['ok' => true, 'version' => $ver, 'prefixes' => $pre, 'max_allowed_packet' => $map ? round($map[1] / 1048576, 1) . ' MB' : '?']);
     }
 
+    if ($action === 'fixpaths') {
+        if (!file_exists(CFG_FILE)) json_out(['ok' => false, 'msg' => t('ไม่พบ configuration.php')]);
+        foreach ([$defaultTmp, $defaultLog] as $d) { if (!is_dir($d)) @mkdir($d, 0755, true); }
+        list($ok, $backup) = write_config(['tmp_path' => $defaultTmp, 'log_path' => $defaultLog]);
+        json_out(['ok' => $ok, 'msg' => $ok ? sprintf(t('บันทึกแล้ว (สำรองไฟล์เดิมเป็น %s)'), $backup) : t('เขียน configuration.php ไม่ได้ ตรวจ permission (ควรเป็น 644 ชั่วคราว)')]);
+    }
     if ($action === 'saveconfig') {
         if (!file_exists(CFG_FILE)) json_out(['ok' => false, 'msg' => t('ไม่พบ configuration.php')]);
         $set = [
@@ -1314,6 +1323,7 @@ $flowDefault = ($situation === 'empty' || $situation === 'nocfg') ? 'package' : 
   .stepper li i{width:22px;height:22px;border-radius:50%;background:var(--paper);display:inline-flex;align-items:center;justify-content:center;font-style:normal;font-size:13px;font-weight:600}
   .card.step.collapsed > *:not(h2){display:none} .card.step.collapsed h2{margin-bottom:0;cursor:pointer} .card.step h2{cursor:pointer}
   .card.step.hidden{display:none}
+  .fixrow{margin-top:8px;display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;font-size:15px;color:var(--gray)} .fixrow button{margin:0;min-height:40px;padding:0 14px;font-size:15px}
   .nextbar{display:flex;justify-content:flex-end;gap:10px;margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}
   .bmc{display:inline-flex;align-items:center;gap:8px;margin-top:8px;padding:8px 16px;border-radius:999px;background:var(--orange);color:#111;font-weight:500;text-decoration:none;font-size:15px}.bmc:hover{filter:brightness(.95);color:#111}
 </style>
@@ -1368,9 +1378,13 @@ $flowDefault = ($situation === 'empty' || $situation === 'nocfg') ? 'package' : 
     <tr><td><?= t('root เว็บ') ?></td><td class="mono"><?= h(ROOT) ?></td></tr>
     <tr><td>PHP</td><td><?= h(PHP_VERSION) ?> · mysqli <?= extension_loaded('mysqli') ? t('<span class=ok>มี</span>') : t('<span class=bad>ไม่มี</span>') ?> · zlib <?= function_exists('gzopen') ? t('<span class=ok>มี</span>') : t('<span class=bad>ไม่มี (เปิด .gz ไม่ได้)</span>') ?> · GD/WebP <?= function_exists('imagewebp') ? t('<span class=ok>มี</span>') : t('<span class=bad>ไม่มี</span>') ?></td></tr>
     <tr><td>open_basedir</td><td class="mono"><?= h($ob ?: t('(ไม่จำกัด)')) ?></td></tr>
-    <tr><td><?= t('tmp_path ปัจจุบัน') ?></td><td><span class="mono"><?= h($cfg['tmp_path'] ?? '-') ?></span> <span class="<?= $tmpOk ? 'ok' : 'bad' ?>"><?= h($tmpMsg) ?></span></td></tr>
-    <tr><td><?= t('log_path ปัจจุบัน') ?></td><td><span class="mono"><?= h($cfg['log_path'] ?? '-') ?></span> <span class="<?= $logOk ? 'ok' : 'bad' ?>"><?= h($logMsg) ?></span></td></tr>
-    <tr><td>.htaccess</td><td><?= $hasHt ? t('<span class=ok>มี</span>') : t('<span class=bad>ไม่มี</span> (ใช้เครื่องมือข้อ 5 สร้างได้)') ?></td></tr>
+    <tr><td><?= t('tmp_path ปัจจุบัน') ?></td><td><span class="mono"><?= h($cfg['tmp_path'] ?? '-') ?></span> <span class="<?= $tmpOk ? 'ok' : 'bad' ?>"><?= h($tmpMsg) ?></span>
+      <?php if ($cfg && !$tmpOk): ?><div class="fixrow"><?= t('ควรเป็น') ?> <span class="mono"><?= h($defaultTmp) ?></span> <button type="button" class="sec" onclick="fixPaths()"><?= t('แก้ให้เลย') ?></button></div><?php endif; ?></td></tr>
+    <tr><td><?= t('log_path ปัจจุบัน') ?></td><td><span class="mono"><?= h($cfg['log_path'] ?? '-') ?></span> <span class="<?= $logOk ? 'ok' : 'bad' ?>"><?= h($logMsg) ?></span>
+      <?php if ($cfg && !$logOk): ?><div class="fixrow"><?= t('ควรเป็น') ?> <span class="mono"><?= h($defaultLog) ?></span> <button type="button" class="sec" onclick="fixPaths()"><?= t('แก้ให้เลย') ?></button></div><?php endif; ?></td></tr>
+    <tr><td>.htaccess</td><td><?= $hasHt ? t('<span class=ok>มี</span>') : t('<span class=bad>ไม่มี</span>') ?>
+      <?php if (!$hasHt): ?><div class="fixrow"><button type="button" class="sec" onclick="tool('htaccess').then(()=>location.reload())"><?= t('สร้าง .htaccess ให้เลย') ?></button></div><?php endif; ?></td></tr>
+    <?php if ($cfg && (!$tmpOk || !$logOk)): ?><tr><td></td><td id="fixres" class="stat"></td></tr><?php endif; ?>
   </table>
 </div>
 
@@ -1783,6 +1797,12 @@ async function tool(what) {
   const r = await api('tools', d);
   const p = $('toolres'); p.style.display = 'block'; p.textContent = r.msg;
   if (what === 'selfdestruct' && r.ok) setTimeout(() => location.reload(), 1500);
+  return r;
+}
+async function fixPaths() {
+  const r = await api('fixpaths', {});
+  const el = $('fixres'); if (el) el.innerHTML = (r.ok ? '<span class=ok>✔ ' : '<span class=bad>✘ ') + esc(r.msg) + '</span>';
+  if (r.ok) setTimeout(() => location.reload(), 900);
 }
 function esc(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 </script>

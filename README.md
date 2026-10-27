@@ -1,4 +1,4 @@
-# Colorpack Joomla Migrate V1.2.0
+# Colorpack Joomla Migrate V1.2.1
 
 **[EN]** Single-file PHP tool for moving a Joomla 3 / 4 / 5 site to a new server.
 Fixes `configuration.php` paths, tests the database, imports huge `.sql` / `.sql.gz` dumps in
@@ -15,7 +15,7 @@ upload → open → migrate → delete.
 - [`jmigrate.php`](jmigrate.php) — on the **new** server: restore package, import DB, fix config / วางบน server **ใหม่**: กู้แพ็กเกจ นำเข้า DB แก้ config
 - [`jbackup.php`](jbackup.php) — on the **old** server: build the migration package (files + DB) / วางบน server **เดิม**: สร้างแพ็กเกจย้ายเว็บ (ไฟล์ + DB)
 
-(V1.2.0 · requires PHP 7.0+ with `mysqli` and `zlib` / ต้องใช้ PHP 7.0+ พร้อม `mysqli` และ `zlib`)
+(V1.2.1 · requires PHP 7.0+ with `mysqli` and `zlib` / ต้องใช้ PHP 7.0+ พร้อม `mysqli` และ `zlib`)
 
 **Interface / หน้าจอ:** ไทย / English — switch in the top bar / สลับได้ที่แถบด้านบน
 
@@ -193,6 +193,11 @@ SEF, URL Rewriting, System Cache พร้อมปุ่มลัด *โหม
 ---
 
 ## Changelog / บันทึกการแก้ไข
+
+### 1.2.1 — 2026-10-27
+**[EN]** Fix-in-place buttons on the environment check: a wrong `tmp_path` / `log_path` shows the correct path with a **Fix it now** button (creates the folders and rewrites configuration.php with a backup); a missing `.htaccess` gets **Create .htaccess now**.
+
+**[TH]** ปุ่มแก้ทันทีในหน้าตรวจสภาพแวดล้อม: `tmp_path` / `log_path` ที่ผิดจะแสดง path ที่ควรเป็นพร้อมปุ่ม **แก้ให้เลย** (สร้างโฟลเดอร์และเขียน configuration.php ให้ สำรองไฟล์เดิมก่อน) และ `.htaccess` ที่หายมีปุ่ม **สร้าง .htaccess ให้เลย**
 
 ### 1.2.0 — 2026-10-27
 **[EN]** Guided UI.
